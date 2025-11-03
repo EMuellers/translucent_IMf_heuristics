@@ -24,13 +24,13 @@ def get_end_activities(log, executed_activities, enabled_activities_key="enabled
     variants = get_translucent_trace_variants(log)
     #Change:
     #Elias: Only include activity if it actually appeared at the end of a trace at least once, so to not count loops
-    at_least_once_end_activities = { variants[v][0][-1]["concept:name"] for v in variants if len(variants[v][0]) > 0 }
+    #at_least_once_end_activities = { variants[v][0][-1]["concept:name"] for v in variants if len(variants[v][0]) > 0 }
     for variant in variants:
         trace = variants[variant][0]
         if len(trace) > 0:
             end_activities_strings = trace[-1][enabled_activities_key].split(",")
             for el in end_activities_strings:
-                if el.strip() in executed_activities and el.strip() in at_least_once_end_activities:
+                if el.strip() in executed_activities: #and el.strip() in at_least_once_end_activities:
                     end_activities.add(el.strip())
     return end_activities
 
