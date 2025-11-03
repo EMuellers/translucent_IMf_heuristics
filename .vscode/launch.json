@@ -1,0 +1,30 @@
+{
+    // VS Code debug configurations for this workspace
+    // Use the dropdown in the Run view to pick one of these and press the green Run button
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run evaluate as module (recommended)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "evaluation.sepsis.evaluate",
+            "cwd": "${workspaceFolder}",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Run current file with workspace cwd, STRG + F5 for no debug",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "cwd": "${fileDirname}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        }
+    ]
+}
