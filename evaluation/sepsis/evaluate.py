@@ -264,7 +264,7 @@ model = [0.4]
 
 tDFGs = [False]
 
-#TODO Make functions compatible with algo parameters + add strict end activities functionality
+
 # Here the different Heuristics for the DFG can be set
 #TODO: Add parameters to file path?
 algo_parameters = {
