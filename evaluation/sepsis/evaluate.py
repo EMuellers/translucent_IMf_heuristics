@@ -13,7 +13,7 @@ import glob
 
 
 
-def evaluate(base, tDFG, threshold, print_models=False):
+def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False):
     if base == 0.8:
         base = "08"
     elif base == 0.6:
@@ -86,12 +86,12 @@ def evaluate(base, tDFG, threshold, print_models=False):
         df = pd.read_csv(file)
         sub_log = log_converter.apply(df, variant=log_converter.Variants.TO_EVENT_LOG)
         if not tDFG: # signifies which dfg to use for fall throughs
-            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IM", "tDFG_fall_through": False}, threshold)
+            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IM", "tDFG_fall_through": False} | algo_parameters, threshold)
             if print_models:
                 os.makedirs('results/DFG_fall/'+base+"/"+threshold_str+"/models/IM", exist_ok=True)
                 pm4py.write_pnml(model, i_m, f_m, f"results/DFG_fall/{base}/{threshold_str}/models/IM/im_{i}.pnml")
         else:
-            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IM", "tDFG_fall_through": True}, threshold)
+            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IM", "tDFG_fall_through": True} | algo_parameters, threshold)
             if print_models:
                 os.makedirs('results/tDFG_fall/'+base+"/"+threshold_str+"/models/IM", exist_ok=True)
                 pm4py.write_pnml(model, i_m, f_m, f"results/tDFG_fall/{base}/{threshold_str}/models/IM/im_{i}.pnml")
@@ -99,12 +99,12 @@ def evaluate(base, tDFG, threshold, print_models=False):
         im_precision.append(translucent_precision_score(log, model, i_m, f_m))
 
         if not tDFG:
-            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMto", "tDFG_fall_through": False}, threshold)
+            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMto", "tDFG_fall_through": False} | algo_parameters, threshold)
             if print_models:
                 os.makedirs('results/DFG_fall/'+base+"/"+threshold_str+"/models/IMto", exist_ok=True)
                 pm4py.write_pnml(model, i_m, f_m, f"results/DFG_fall/{base}/{threshold_str}/models/IMto/imto_{i}.pnml")
         else:
-            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMto", "tDFG_fall_through": True}, threshold)
+            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMto", "tDFG_fall_through": True} | algo_parameters, threshold)
             if print_models:
                 os.makedirs('results/tDFG_fall/'+base+"/"+threshold_str+"/models/IMto", exist_ok=True)
                 pm4py.write_pnml(model, i_m, f_m, f"results/tDFG_fall/{base}/{threshold_str}/models/IMto/imto_{i}.pnml")
@@ -112,12 +112,12 @@ def evaluate(base, tDFG, threshold, print_models=False):
         imto_precision.append(translucent_precision_score(log, model, i_m, f_m))
 
         if not tDFG:
-            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMtf", "tDFG_fall_through": False}, threshold)
+            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMtf", "tDFG_fall_through": False} | algo_parameters, threshold)
             if print_models:
                 os.makedirs('results/DFG_fall/'+base+"/"+threshold_str+"/models/IMtf", exist_ok=True)
                 pm4py.write_pnml(model, i_m, f_m, f"results/DFG_fall/{base}/{threshold_str}/models/IMtf/imtf_{i}.pnml")
         else:
-            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMtf", "tDFG_fall_through": True}, threshold)
+            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMtf", "tDFG_fall_through": True} | algo_parameters, threshold)
             if print_models:
                 os.makedirs('results/tDFG_fall/'+base+"/"+threshold_str+"/models/IMtf", exist_ok=True)
                 pm4py.write_pnml(model, i_m, f_m, f"results/tDFG_fall/{base}/{threshold_str}/models/IMtf/imtf_{i}.pnml")
@@ -125,12 +125,12 @@ def evaluate(base, tDFG, threshold, print_models=False):
         imtf_precision.append(translucent_precision_score(log, model, i_m, f_m))
 
         if not tDFG:
-            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMts", "tDFG_fall_through": False}, threshold)
+            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMts", "tDFG_fall_through": False} | algo_parameters, threshold)
             if print_models:
                 os.makedirs('results/DFG_fall/'+base+"/"+threshold_str+"/models/IMts", exist_ok=True)
                 pm4py.write_pnml(model, i_m, f_m, f"results/DFG_fall/{base}/{threshold_str}/models/IMts/imts_{i}.pnml")
         else:
-            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMts", "tDFG_fall_through": True}, threshold)
+            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMts", "tDFG_fall_through": True} | algo_parameters, threshold)
             if print_models:
                 os.makedirs('results/tDFG_fall/'+base+"/"+threshold_str+"/models/IMts", exist_ok=True)
                 pm4py.write_pnml(model, i_m, f_m, f"results/tDFG_fall/{base}/{threshold_str}/models/IMts/imts_{i}.pnml")
@@ -264,7 +264,16 @@ model = [0.4]
 
 tDFGs = [False]
 
+#TODO Make functions compatible with algo parameters + add strict end activities functionality
+# Here the different Heuristics for the DFG can be set
+#TODO: Add parameters to file path?
+algo_parameters = {
+    
+    "strict_end_activities": False # Only consider translucent end activities which actually appear at the end of a trace at least once
+    
+}
+
 for log in logs:
     for s2 in model:
         for tdfg in tDFGs:
-            evaluate(log, tdfg, s2, True)
+            evaluate(log, tdfg, s2, algo_parameters, print_models=True)

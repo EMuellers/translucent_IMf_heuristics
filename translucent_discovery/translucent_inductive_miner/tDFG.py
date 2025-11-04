@@ -7,7 +7,7 @@ from translucent_discovery.utils.translucent_activity_relationships import get_p
 
 
 
-def discover_dfg(log) -> DFG:
+def discover_dfg(log, parameters={}) -> DFG:
     if isinstance(log, pd.DataFrame):
         log = log_converter.apply(log, variant=log_converter.Variants.TO_EVENT_LOG)
     dfg = DFG()
@@ -28,13 +28,13 @@ def discover_dfg(log) -> DFG:
     start_activities = get_start_activities(log, executed_activities)
     for act in start_activities:
         dfg.start_activities.update(({act: 1}))
-    end_activities = get_end_activities(log, executed_activities)
+    end_activities = get_end_activities(log, executed_activities, strict_end_activities=parameters.get("strict_end_activities", False))
     for act in end_activities:
         dfg.end_activities.update({act: 1})
     return dfg
 
 #entspricht comut.discover_dfg_uvcl
-def discover_frequent_dfg(log, subtract_xor=True) -> DFG:
+def discover_frequent_dfg(log, subtract_xor=True, parameters={}) -> DFG:
     if isinstance(log, pd.DataFrame):
         log = log_converter.apply(log, variant=log_converter.Variants.TO_EVENT_LOG)
     dfg = DFG()
@@ -70,7 +70,7 @@ def discover_frequent_dfg(log, subtract_xor=True) -> DFG:
     start_activities = get_start_activities_frequent(log, executed_activities)
     for act in start_activities:
         dfg.start_activities.update(({act: start_activities[act]}))
-    end_activities = get_end_activities_frequent(log, executed_activities)
+    end_activities = get_end_activities_frequent(log, executed_activities, strict_end_activities=parameters.get("strict_end_activities", False))
     for act in end_activities:
         dfg.end_activities.update({act: end_activities[act]})
     return dfg

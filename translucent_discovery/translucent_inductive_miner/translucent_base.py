@@ -28,12 +28,12 @@ def discover_process_tree(log, parameters, noise_threshold):
     uvcl = comut.get_variants(comut.project_univariate(log, key=ack, df_glue=cidk, df_sorting_criterion_key=tk))
     if noise_threshold == 0:
         im = IM(parameters)
-        temp = IMDataStructureTranslucent(uvcl, log)
+        temp = IMDataStructureTranslucent(uvcl, log, parameters=parameters)
         return im.apply(temp, parameters)
     else:
         imf = IMF(parameters)
         parameters["noise_threshold"] = noise_threshold
-        temp = IMDataStructureTranslucent(uvcl, log, frequent=True)
+        temp = IMDataStructureTranslucent(uvcl, log, frequent=True, parameters=parameters)
         return imf.apply(temp, parameters)
 
 

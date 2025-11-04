@@ -52,7 +52,7 @@ def split_log(uvcl, log):
 
 #Elias: pm4py Äquivalent: IMDataStructureUVCL in algo/discovery/inductive/dtypes/im_ds.py
 class IMDataStructureTranslucent(IMDataStructureLog[UVCL]):
-    def __init__(self, obj: UVCL, log, dfg: Optional[DFG] = None, frequent=False, tdfg = None):
+    def __init__(self, obj: UVCL, log, dfg: Optional[DFG] = None, frequent=False, tdfg = None, parameters = {}):
         super().__init__(obj)
         if dfg is None:
             self._dfg = comut.discover_dfg_uvcl(self._obj)
@@ -63,10 +63,10 @@ class IMDataStructureTranslucent(IMDataStructureLog[UVCL]):
         self._frequent = frequent
         self._log = split_log(self._obj, copy.deepcopy(log))
         if not frequent:
-            self._tdfg = discover_dfg(self._log)
+            self._tdfg = discover_dfg(self._log, parameters=parameters)
         else:
             if tdfg is None:
-                self._tdfg = discover_frequent_dfg(self._log)
+                self._tdfg = discover_frequent_dfg(self._log, parameters=parameters)
             else:
                 self._tdfg = tdfg
         #Elias: #debug: display tdfg

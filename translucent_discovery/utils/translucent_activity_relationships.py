@@ -19,19 +19,24 @@ def get_start_activities(log, executed_activities, enabled_activities_key="enabl
     return start_activities
 
 
-def get_end_activities(log, executed_activities, enabled_activities_key="enabled_activities"):
+def get_end_activities(log, executed_activities, enabled_activities_key="enabled_activities", strict_end_activities=False):
     end_activities = set()
     variants = get_translucent_trace_variants(log)
     #Change:
-    #Elias: Only include activity if it actually appeared at the end of a trace at least once, so to not count loops
-    #at_least_once_end_activities = { variants[v][0][-1]["concept:name"] for v in variants if len(variants[v][0]) > 0 }
+    #Elias: Strict end activities only count those that actually appeared at the end of a trace at least once
+    if strict_end_activities:
+        at_least_once_end_activities = { variants[v][0][-1]["concept:name"] for v in variants if len(variants[v][0]) > 0 }
     for variant in variants:
         trace = variants[variant][0]
         if len(trace) > 0:
             end_activities_strings = trace[-1][enabled_activities_key].split(",")
             for el in end_activities_strings:
-                if el.strip() in executed_activities: #and el.strip() in at_least_once_end_activities:
-                    end_activities.add(el.strip())
+                el_s = el.strip()
+                # include activity only if it's an executed activity and,
+                # when strict_end_activities is True, also only if it actually appeared
+                # as the final executed activity in at least one trace
+                if el_s in executed_activities and (not strict_end_activities or el_s in at_least_once_end_activities):
+                    end_activities.add(el_s)
     return end_activities
 
 
@@ -135,22 +140,27 @@ def get_start_activities_frequent(log, executed_activities, enabled_activities_k
     return start_activities
 
 
-def get_end_activities_frequent(log, executed_activities, enabled_activities_key="enabled_activities"):
+def get_end_activities_frequent(log, executed_activities, enabled_activities_key="enabled_activities", strict_end_activities=False):
     end_activities = {}
     variants = get_translucent_trace_variants(log)
     #Change:
-    #Elias: Only include activity if it actually appeared at the end of a trace at least once, so to not count loops
-    #at_least_once_end_activities = { variants[v][0][-1]["concept:name"] for v in variants if len(variants[v][0]) > 0 }
+    #Elias: Strict end activities only count those that actually appeared at the end of a trace at least once
+    if strict_end_activities:
+        at_least_once_end_activities = { variants[v][0][-1]["concept:name"] for v in variants if len(variants[v][0]) > 0 }
     for variant in variants:
         number_of_occurrence = len(variants[variant][1])
         trace = variants[variant][0]
         if len(trace) > 0:
             end_activities_strings = trace[-1][enabled_activities_key].split(",")
             for el in end_activities_strings:
-                if el.strip() in executed_activities: #and el.strip() in at_least_once_end_activities: #Elias: added condition
-                    if el.strip() not in end_activities:
-                        end_activities[el.strip()] = 0
-                    end_activities[el.strip()] += number_of_occurrence
+                el_s = el.strip()
+                # include activity only if it's an executed activity and,
+                # when strict_end_activities is True, also only if it actually appeared
+                # as the final executed activity in at least one trace
+                if el_s in executed_activities and (not strict_end_activities or el_s in at_least_once_end_activities):
+                    if el_s not in end_activities:
+                        end_activities[el_s] = 0
+                    end_activities[el_s] += number_of_occurrence
     return end_activities
 
 
