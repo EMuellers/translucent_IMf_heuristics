@@ -264,10 +264,20 @@ model = [0.4]
 
 tDFGs = [False]
 
-
+#TODO: Add parameters in framework_frequent when dfg is filtered! 
+#TODO: Mutual exclusive tdf relationships, what is synch in the paper? How is filtering applied?
 # Here the different Heuristics for the DFG can be set
+# If no value is set, the parameter will be treated as set to False in the algorithm
 #TODO: Add parameters to file path?
 algo_parameters = {
+    
+    ### PARAMETERS FOR NON-FREQUENT ALGORITHM ###
+    
+    
+    ### PARAMETERS FOR FREQUENT ALGORITHM ###
+    
+    
+    ### PARAMETERS THAT APPLY TO BOTH ###
     
     "strict_end_activities": False # Only consider translucent end activities which actually appear at the end of a trace at least once
     

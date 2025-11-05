@@ -208,4 +208,4 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
         for act in graph:
             dfg.graph[act] = graph[act]
 
-        return IMDataStructureTranslucent(obj.data_structure, obj.log, tdfg = dfg)
+        return IMDataStructureTranslucent(obj.data_structure, obj.log, tdfg = dfg) #!Elias: Why is DFG not set here? Check pm4py code

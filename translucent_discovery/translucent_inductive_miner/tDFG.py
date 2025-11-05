@@ -33,7 +33,7 @@ def discover_dfg(log, parameters={}) -> DFG:
         dfg.end_activities.update({act: 1})
     return dfg
 
-#entspricht comut.discover_dfg_uvcl
+#entspricht comut.discover_dfg_uvcl in pm4py
 def discover_frequent_dfg(log, subtract_xor=True, parameters={}) -> DFG:
     if isinstance(log, pd.DataFrame):
         log = log_converter.apply(log, variant=log_converter.Variants.TO_EVENT_LOG)
