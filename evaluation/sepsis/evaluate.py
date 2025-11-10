@@ -266,6 +266,7 @@ tDFGs = [False]
 
 #TODO: Add parameters in framework_frequent when dfg is filtered! 
 #TODO: Mutual exclusive tdf relationships, what is synch in the paper? How is filtering applied?
+#TODO: Understand split_log
 # Here the different Heuristics for the DFG can be set
 # If no value is set, the parameter will be treated as set to False in the algorithm
 #TODO: Add parameters to file path?

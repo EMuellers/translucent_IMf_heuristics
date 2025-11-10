@@ -80,7 +80,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                     tree = self._recurse(cut[0], cut[1], parameters=parameters)
                 if tree is None:
                     if not second_iteration_translucent:
-                        filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, True)
+                        filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, True, parameters=parameters)
                         tree = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True)
                     if second_iteration_translucent:
                         parameters["tDFG"] = False
@@ -90,7 +90,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                             tree = self._recurse(cut[0], cut[1], parameters=parameters)
                         if tree is None:
                             if not second_iteration_normal:
-                                filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, False)
+                                filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, False, parameters=parameters)
                                 tree = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True, second_iteration_normal=True)
                                 if tree is None:
                                     if parameters["tDFG_fall_through"]:
@@ -107,7 +107,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                         tree = self._recurse(cut[0], cut[1], parameters=parameters)
                     if tree is None:
                         if not second_iteration_normal:
-                            filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, False)
+                            filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, False, parameters=parameters)
                             tree = self.apply(filtered_ds, parameters=parameters, second_iteration_normal=True)
                             if tree is None:
                                 if parameters["tDFG_fall_through"]:
@@ -124,7 +124,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                         tree = self._recurse(cut[0], cut[1], parameters=parameters)
                     if tree is None:
                         if not second_iteration_translucent:
-                            filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, translucent=True)
+                            filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, translucent=True, parameters=parameters)
                             tree = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True)
                             if tree is None:
                                 if parameters["tDFG_fall_through"]:
@@ -140,7 +140,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                     tree = self._recurse(cut[0], cut[1], parameters=parameters)
                 if tree is None:
                     if not second_iteration_normal:
-                        filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, False)
+                        filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, False, parameters=parameters)
                         tree = self.apply(filtered_ds, parameters=parameters, second_iteration_normal=True)
                     if second_iteration_normal:
                         parameters["tDFG"] = True
@@ -150,7 +150,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                             tree = self._recurse(cut[0], cut[1], parameters=parameters)
                         if tree is None:
                             if not second_iteration_translucent:
-                                filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, True)
+                                filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, True, parameters=parameters)
                                 tree = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True,
                                                   second_iteration_normal=True)
                                 if tree is None:
@@ -176,7 +176,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
         pass
 
 
-    def __filter_dfg_noise(self, obj, noise_threshold, translucent):
+    def __filter_dfg_noise(self, obj, noise_threshold, translucent, parameters={}):
         if translucent:
             start_activities = copy(obj.tdfg.start_activities)
             end_activities = copy(obj.tdfg.end_activities)
@@ -208,4 +208,8 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
         for act in graph:
             dfg.graph[act] = graph[act]
 
-        return IMDataStructureTranslucent(obj.data_structure, obj.log, tdfg = dfg) #!Elias: Why is DFG not set here? Check pm4py code
+        # Fix: Hand over the correct (t)dfg, frequent flag and parameters
+        if translucent:
+            return IMDataStructureTranslucent(obj.data_structure, obj.log, tdfg = dfg, frequent=obj.frequent, parameters=parameters)
+        else:
+            return IMDataStructureTranslucent(obj.data_structure, obj.log, dfg = dfg, frequent=obj.frequent, parameters=parameters)

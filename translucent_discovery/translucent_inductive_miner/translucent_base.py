@@ -39,5 +39,8 @@ def discover_process_tree(log, parameters, noise_threshold):
 
 def discover_petri_net(log, parameters, noise_threshold=0):
     process_tree = discover_process_tree(log, parameters, noise_threshold)
+    # Make process trees consistent with pm4py implementation
+    process_tree = pm4py.objects.process_tree.utils.generic.fold(process_tree)
+    pm4py.objects.process_tree.utils.generic.tree_sort(process_tree)
     return pm4py.convert_to_petri_net(process_tree)
 
