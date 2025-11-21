@@ -264,7 +264,7 @@ model = [0.4]
 
 tDFGs = [False]
 
-#TODO: Add parameters in framework_frequent when dfg is filtered! 
+
 #TODO: Mutual exclusive tdf relationships, what is synch in the paper? How is filtering applied?
 #TODO: Understand split_log
 # Here the different Heuristics for the DFG can be set
