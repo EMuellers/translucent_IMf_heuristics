@@ -13,7 +13,7 @@ import glob
 
 
 
-def evaluate(base, tDFG, threshold):
+def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False):
     if base == 0.8:
         base = "08"
     elif base == 0.6:
@@ -43,7 +43,9 @@ def evaluate(base, tDFG, threshold):
         threshold_str = "None"
     # Bedeutung: base --> Mit welchem IMf wurde der log erstellt
     # threshold --> Mit welchem noise filtering werden die Modelle erstellt
-    log = pd.read_csv('logs/'+base+'/ground_truth.csv')
+    # read ground truth from the base folder (same behavior as sepsis evaluate)
+    # if you still want to use 'logs/'+base, change the path accordingly
+    log = pd.read_csv(base+'/ground_truth.csv')
     log = log_converter.apply(log, variant=log_converter.Variants.TO_EVENT_LOG)
 
     im_fitness = []
@@ -58,45 +60,83 @@ def evaluate(base, tDFG, threshold):
     imts_fitness = []
     imts_precision = []
     i = 0
-    subfolder_path = 'logs/'+base
+    # subfolder containing the variant CSV files
+    subfolder_path = base
 
-    # Get a list of all CSV files in the subfolder except 'ground_truth.csv'
+    # Get a list of all CSV files in the subfolder except 'ground_truth.csv' and any result files
     csv_files = glob.glob(os.path.join(subfolder_path, '*.csv'))
-    csv_files = [file for file in csv_files if 'ground_truth.csv' not in file]
+    csv_files = [file for file in csv_files if 'ground_truth.csv' not in file and '_result' not in file]
+    # Sort files numerically by their basename for consistent ordering
+    import re
+    def _numeric_key(path):
+        name = os.path.splitext(os.path.basename(path))[0]
+        try:
+            return int(name)
+        except ValueError:
+            m = re.search(r'(\d+)', name)
+            if m:
+                return int(m.group(1))
+            return float('inf')
+    csv_files.sort(key=_numeric_key)
     i = 0
     for file in csv_files:
         print(i)
         i += 1
         df = pd.read_csv(file)
         sub_log = log_converter.apply(df, variant=log_converter.Variants.TO_EVENT_LOG)
+        # IM (standard)
         if not tDFG:
-            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IM"}, threshold)
+            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IM", "tDFG_fall_through": False} | algo_parameters, threshold)
+            if print_models:
+                os.makedirs('results/DFG_fall/'+base+"/"+threshold_str+"/models/IM", exist_ok=True)
+                pm4py.write_pnml(model, i_m, f_m, f"results/DFG_fall/{base}/{threshold_str}/models/IM/im_{i}.pnml")
         else:
-            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IM", "tDFG_fall_through": True}, threshold)
+            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IM", "tDFG_fall_through": True} | algo_parameters, threshold)
+            if print_models:
+                os.makedirs('results/tDFG_fall/'+base+"/"+threshold_str+"/models/IM", exist_ok=True)
+                pm4py.write_pnml(model, i_m, f_m, f"results/tDFG_fall/{base}/{threshold_str}/models/IM/im_{i}.pnml")
         im_fitness.append(pm4py.conformance.fitness_alignments(log, model, i_m, f_m)["log_fitness"])
         im_precision.append(translucent_precision_score(log, model, i_m, f_m))
 
+        # IMto
         if not tDFG:
-            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMto"}, threshold)
+            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMto", "tDFG_fall_through": False} | algo_parameters, threshold)
+            if print_models:
+                os.makedirs('results/DFG_fall/'+base+"/"+threshold_str+"/models/IMto", exist_ok=True)
+                pm4py.write_pnml(model, i_m, f_m, f"results/DFG_fall/{base}/{threshold_str}/models/IMto/imto_{i}.pnml")
         else:
-            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMto", "tDFG_fall_through": True},
-                                                 threshold)
+            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMto", "tDFG_fall_through": True} | algo_parameters, threshold)
+            if print_models:
+                os.makedirs('results/tDFG_fall/'+base+"/"+threshold_str+"/models/IMto", exist_ok=True)
+                pm4py.write_pnml(model, i_m, f_m, f"results/tDFG_fall/{base}/{threshold_str}/models/IMto/imto_{i}.pnml")
         imto_fitness.append(pm4py.conformance.fitness_alignments(log, model, i_m, f_m)["log_fitness"])
         imto_precision.append(translucent_precision_score(log, model, i_m, f_m))
 
+        # IMtf
         if not tDFG:
-            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMtf"}, threshold)
+            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMtf", "tDFG_fall_through": False} | algo_parameters, threshold)
+            if print_models:
+                os.makedirs('results/DFG_fall/'+base+"/"+threshold_str+"/models/IMtf", exist_ok=True)
+                pm4py.write_pnml(model, i_m, f_m, f"results/DFG_fall/{base}/{threshold_str}/models/IMtf/imtf_{i}.pnml")
         else:
-            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMtf", "tDFG_fall_through": True},
-                                                 threshold)
+            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMtf", "tDFG_fall_through": True} | algo_parameters, threshold)
+            if print_models:
+                os.makedirs('results/tDFG_fall/'+base+"/"+threshold_str+"/models/IMtf", exist_ok=True)
+                pm4py.write_pnml(model, i_m, f_m, f"results/tDFG_fall/{base}/{threshold_str}/models/IMtf/imtf_{i}.pnml")
         imtf_fitness.append(pm4py.conformance.fitness_alignments(log, model, i_m, f_m)["log_fitness"])
         imtf_precision.append(translucent_precision_score(log, model, i_m, f_m))
 
+        # IMts
         if not tDFG:
-            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMts"}, threshold)
+            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMts", "tDFG_fall_through": False} | algo_parameters, threshold)
+            if print_models:
+                os.makedirs('results/DFG_fall/'+base+"/"+threshold_str+"/models/IMts", exist_ok=True)
+                pm4py.write_pnml(model, i_m, f_m, f"results/DFG_fall/{base}/{threshold_str}/models/IMts/imts_{i}.pnml")
         else:
-            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMts", "tDFG_fall_through": True},
-                                                 threshold)
+            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMts", "tDFG_fall_through": True} | algo_parameters, threshold)
+            if print_models:
+                os.makedirs('results/tDFG_fall/'+base+"/"+threshold_str+"/models/IMts", exist_ok=True)
+                pm4py.write_pnml(model, i_m, f_m, f"results/tDFG_fall/{base}/{threshold_str}/models/IMts/imts_{i}.pnml")
         imts_fitness.append(pm4py.conformance.fitness_alignments(log, model, i_m, f_m)["log_fitness"])
         imts_precision.append(translucent_precision_score(log, model, i_m, f_m))
 
@@ -214,7 +254,26 @@ model = [0.8, 0.6, 0.4, 0.3, 0.2, 0]
 
 tDFGs = [True, False]
 
+
+
+# Here the different Heuristics for the DFG can be set
+# If no value is set, the parameter will be treated as set to False in the algorithm
+# TODO: Add parameters to file path?
+algo_parameters = {
+    ### PARAMETERS FOR NON-FREQUENT ALGORITHM ###
+
+
+    ### PARAMETERS FOR FREQUENT ALGORITHM ###
+
+
+    ### PARAMETERS THAT APPLY TO BOTH ###
+    "strict_end_activities": False, # Only consider translucent end activities which actually appear at the end of a trace at least once
+
+    "remove_arcs_heuristics": False # Remove arcs exclusive to tDFG before applying fall throughs
+
+}
+
 for log in logs:
     for s2 in model:
         for tdfg in tDFGs:
-            evaluate(log, tdfg, s2)
+            evaluate(log, tdfg, s2, algo_parameters, print_models=True)
