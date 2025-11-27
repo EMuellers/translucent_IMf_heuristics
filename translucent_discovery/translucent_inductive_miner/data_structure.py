@@ -15,6 +15,7 @@ import pm4py
 
 
 #uvcl: trace variant and count (keine Attribute, nur Aktivitäten)
+#Needed as uvcl does not contain translucent information
 def split_log(uvcl, log):
     variants = get_translucent_trace_variants(log)
     variant_log = EventLog(attributes=log.attributes, extensions=log.extensions, classifiers=log.classifiers,

@@ -85,19 +85,22 @@ def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False):
         i += 1
         df = pd.read_csv(file)
         sub_log = log_converter.apply(df, variant=log_converter.Variants.TO_EVENT_LOG)
+        
         if not tDFG: # signifies which dfg to use for fall throughs
-            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IM", "tDFG_fall_through": False} | algo_parameters, threshold)
+            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IM", "tDFG_fall_through": False}, threshold)
+            #model, i_m, f_m = pm4py.discovery.discover_petri_net_inductive(sub_log, noise_threshold=threshold)
             if print_models:
                 os.makedirs('results/DFG_fall/'+base+"/"+threshold_str+"/models/IM", exist_ok=True)
                 pm4py.write_pnml(model, i_m, f_m, f"results/DFG_fall/{base}/{threshold_str}/models/IM/im_{i}.pnml")
         else:
-            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IM", "tDFG_fall_through": True} | algo_parameters, threshold)
+            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IM", "tDFG_fall_through": True}, threshold)
+            #model, i_m, f_m = pm4py.discovery.discover_petri_net_inductive(sub_log, noise_threshold=threshold)
             if print_models:
                 os.makedirs('results/tDFG_fall/'+base+"/"+threshold_str+"/models/IM", exist_ok=True)
                 pm4py.write_pnml(model, i_m, f_m, f"results/tDFG_fall/{base}/{threshold_str}/models/IM/im_{i}.pnml")
         im_fitness.append(pm4py.conformance.fitness_alignments(log, model, i_m, f_m)["log_fitness"])
         im_precision.append(translucent_precision_score(log, model, i_m, f_m))
-
+        
         if not tDFG:
             model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMto", "tDFG_fall_through": False} | algo_parameters, threshold)
             if print_models:
@@ -175,6 +178,7 @@ def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False):
         result_imts.to_csv('results/tDFG_fall/'+base+"/"+threshold_str+"/imts_result.csv", sep=",", index=False)
 
     algorithms = ['IM', 'IMto', 'IMtf', 'IMts']
+    #algorithms = ['IMto']
     criteria = ['Fitness', 'Precision', 'F1-Score']
     algorithm_colors = ['blue', 'green', 'red', 'purple']
     data = {
@@ -260,13 +264,14 @@ def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False):
 
 #Elias: Test
 logs = [0.4]
-model = [0.4]
+model = [0]
 
 tDFGs = [False]
-
+#Why do IM and pm4py IM differ in fitness and precision values? -> still probably fallthroughs...
+#TODO: Finish heuristics miner inspired heuristic and add to infrequent
+#TODO: Add end activity heuristic (see notes IPad)
 
 #TODO: Mutual exclusive tdf relationships, what is synch in the paper? How is filtering applied?
-#TODO: Understand split_log
 # Here the different Heuristics for the DFG can be set
 # If no value is set, the parameter will be treated as set to False in the algorithm
 #TODO: Add parameters to file path?
@@ -280,8 +285,11 @@ algo_parameters = {
     
     ### PARAMETERS THAT APPLY TO BOTH ###
     
-    "strict_end_activities": False # Only consider translucent end activities which actually appear at the end of a trace at least once
+    "strict_end_activities": False, # Only consider translucent end activities which actually appear at the end of a trace at least once
     
+    "remove_arcs_heuristics": "dependency_score", # Remove arcs exclusive to tDFG before applying fall throughs ("dependency_score"), set to False to disable
+    
+    "parallel_end_activities_heuristic": False # If two activities are in translucent parallel relation and one is an end activity, the other is also considered an end activity #TODO: Implement
 }
 
 for log in logs:
