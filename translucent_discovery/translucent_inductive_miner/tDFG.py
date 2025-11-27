@@ -59,19 +59,6 @@ def discover_frequent_dfg(log, subtract_xor=True, parameters={}) -> DFG:
             executed_activities.add(event["concept:name"])
     parallel = get_parallel_relationships_frequent(log, executed_activities)
     xor = get_choice_relationships_frequent(log, executed_activities)
-    added_parallel_arcs = set()
-    for (source, target) in parallel:
-        count = parallel[(source, target)]
-        if subtract_xor:
-            xor_count = 0
-            if (source, target) in xor:
-                xor_count = xor[(source, target)]
-            if count-xor_count > 0:
-                dfg.graph.update({(source, target): count-xor_count})
-                added_parallel_arcs.add((source, target))
-        else:
-            dfg.graph.update({(source, target): count})
-            added_parallel_arcs.add((source, target))
     directly_follow = get_directly_follow_relationships_frequent(log, executed_activities)
     for (source, target) in directly_follow:
         count = directly_follow[(source, target)]
@@ -89,7 +76,20 @@ def discover_frequent_dfg(log, subtract_xor=True, parameters={}) -> DFG:
     end_activities = get_end_activities_frequent(log, executed_activities, strict_end_activities=parameters.get("strict_end_activities", False))
     # Heuristic: If two activities are in translucent parallel relation and one is an end activity, the other is also considered an end activity
     if parameters.get("parallel_end_activities_heuristic", False):
-        for (source, target) in added_parallel_arcs:
+        added_parallel_arcs = set()
+        for (source, target) in parallel:
+            count = parallel[(source, target)]
+            if subtract_xor:
+                xor_count = 0
+                if (source, target) in xor:
+                    xor_count = xor[(source, target)]
+                if count-xor_count > 0:
+                    dfg.graph.update({(source, target): count-xor_count})
+                    added_parallel_arcs.add((source, target))
+            else:
+                dfg.graph.update({(source, target): count})
+                added_parallel_arcs.add((source, target))
+        for (source, target) in added_parallel_arcs and (source != target): # Exclude self-loops
             if source in end_activities and target not in end_activities:
                 end_activities.update({target: end_activities[source]})
             if target in end_activities and source not in end_activities:
