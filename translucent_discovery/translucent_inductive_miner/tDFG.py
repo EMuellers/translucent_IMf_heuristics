@@ -1,3 +1,4 @@
+from networkx import edges
 import pandas as pd
 from pm4py.objects.conversion.log import converter as log_converter
 from pm4py.objects.dfg.obj import DFG
@@ -31,11 +32,16 @@ def discover_dfg(log, parameters={}) -> DFG:
     end_activities = get_end_activities(log, executed_activities, strict_end_activities=parameters.get("strict_end_activities", False))
     # Heuristic: If two activities are in translucent parallel relation and one is an end activity, the other is also considered an end activity
     if parameters.get("parallel_end_activities_heuristic", False):
-        for (source, target) in parallel:
+        edges = set()
+        for source, targets in parallel.items():
+            for target in targets:
+                if source != target: # Exclude self-loops
+                    edges.add(tuple(sorted((source, target))))
+        for (source, target) in edges:
             if source in end_activities and target not in end_activities:
-                end_activities.update({target: 1})
+                end_activities.add(target)
             if target in end_activities and source not in end_activities:
-                end_activities.update({source: 1})
+                end_activities.add(source)
     for act in end_activities:
         dfg.end_activities.update({act: 1})
     return dfg
