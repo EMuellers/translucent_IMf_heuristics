@@ -22,10 +22,12 @@ from translucent_discovery.translucent_inductive_miner.base_case.factory import 
 from translucent_discovery.translucent_inductive_miner.cuts.factory import CutFactory
 from pm4py.algo.discovery.inductive.dtypes.im_ds import IMDataStructure
 from translucent_discovery.translucent_inductive_miner.fall_through.factory import FallThroughFactory
+from translucent_discovery.translucent_inductive_miner.fall_through.empty_traces import EmptyTracesTranslucent
 from pm4py.algo.discovery.inductive.variants.instances import IMInstance
 from pm4py.objects.process_tree.obj import ProcessTree
 from enum import Enum
 from pm4py.util import exec_utils, constants
+from translucent_discovery.translucent_inductive_miner.utils import get_delta_arcs, get_sorted_delta_arcs
 
 
 T = TypeVar('T', bound=IMDataStructure)
@@ -71,6 +73,9 @@ class InductiveMinerFrameworkTranslucent(ABC, Generic[T]):
         return FallThroughFactory.fall_through(obj, self.instance(), self._pool, self._manager, parameters=parameters)
 
     def apply(self, obj: T, parameters: Optional[Dict[str, Any]] = None, level = 0) -> ProcessTree:
+        empty_traces = EmptyTracesTranslucent.apply(obj, parameters)
+        if empty_traces is not None:
+            return self._recurse(empty_traces[0], empty_traces[1], parameters=parameters, level=level)
         tree = self.apply_base_cases(obj, parameters)
         if tree is None:
             # IMtf
@@ -79,13 +84,17 @@ class InductiveMinerFrameworkTranslucent(ABC, Generic[T]):
                 cut = self.find_cut(obj, parameters)
                 if cut is not None:
                     tree = self._recurse(cut[0], cut[1], parameters=parameters, level=level)
+                elif parameters.get("remove_arcs_heuristics", False): # Apply Arc Removal Heuristics
+                    cut = self.apply_arc_removal_heuristics(obj, parameters)
+                    if cut is not None:
+                        tree = self._recurse(cut[0], cut[1], parameters=parameters, level=level)
                 else:
                     parameters["tDFG"] = False
                     cut = self.find_cut(obj, parameters)
                     if cut is not None:
                         parameters["tDFG"] = True
                         tree = self._recurse(cut[0], cut[1], parameters=parameters, level=level)
-            elif parameters["translucent_variant"] == "IM":
+            elif parameters["translucent_variant"] == "IM": #TODO: Should we also apply arc removal heuristics here?
                 parameters["tDFG"] = False
                 cut = self.find_cut(obj, parameters)
                 if cut is not None:
@@ -95,6 +104,10 @@ class InductiveMinerFrameworkTranslucent(ABC, Generic[T]):
                 cut = self.find_cut(obj, parameters)
                 if cut is not None:
                     tree = self._recurse(cut[0], cut[1], parameters=parameters, level=level)
+                elif parameters.get("remove_arcs_heuristics", False): # Apply Arc Removal Heuristics
+                    cut = self.apply_arc_removal_heuristics(obj, parameters)
+                    if cut is not None:
+                        tree = self._recurse(cut[0], cut[1], parameters=parameters, level=level)
             elif parameters["translucent_variant"] == "IMts":
                 parameters["tDFG"] = False
                 cut = self.find_cut(obj, parameters)
@@ -106,6 +119,10 @@ class InductiveMinerFrameworkTranslucent(ABC, Generic[T]):
                     if cut is not None:
                         parameters["tDFG"] = False
                         tree = self._recurse(cut[0], cut[1], parameters=parameters, level=level)
+                    elif parameters.get("remove_arcs_heuristics", False): # Apply Arc Removal Heuristics
+                        cut = self.apply_arc_removal_heuristics(obj, parameters)
+                        if cut is not None:
+                            tree = self._recurse(cut[0], cut[1], parameters=parameters, level=level)
             else:
                 print("Variant not set!!!")
         if tree is None:
@@ -127,3 +144,18 @@ class InductiveMinerFrameworkTranslucent(ABC, Generic[T]):
     @abstractmethod
     def instance(self) -> IMInstance:
         pass
+    
+    def apply_arc_removal_heuristics(self, obj: T, parameters: Optional[Dict[str, Any]] = None) -> Optional[Tuple[ProcessTree, List[T]]]:
+        """Applies arc removal heuristics to try to find a cut in the modified tDFG. If no cut is found, None is returned."""
+        candidate_arcs = get_delta_arcs(obj.tdfg, obj.dfg)
+        cut = None
+        if len(candidate_arcs) > 0:
+            sorted_arcs = get_sorted_delta_arcs(candidate_arcs, obj, criterion=parameters["remove_arcs_heuristics"])
+            # Remove worst arcs one by one and try to find a cut
+            # TODO: Do we want to keep a copy of the original tDFG?
+            for arc, score in sorted_arcs:
+                del obj.tdfg.graph[arc]
+                cut = self.find_cut(obj, parameters)
+                if cut is not None:
+                    break
+        return cut
