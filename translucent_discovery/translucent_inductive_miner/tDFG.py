@@ -29,6 +29,13 @@ def discover_dfg(log, parameters={}) -> DFG:
     for act in start_activities:
         dfg.start_activities.update(({act: 1}))
     end_activities = get_end_activities(log, executed_activities, strict_end_activities=parameters.get("strict_end_activities", False))
+    # Heuristic: If two activities are in translucent parallel relation and one is an end activity, the other is also considered an end activity
+    if parameters.get("parallel_end_activities_heuristic", False):
+        for (source, target) in parallel:
+            if source in end_activities and target not in end_activities:
+                end_activities.update({target: 1})
+            if target in end_activities and source not in end_activities:
+                end_activities.update({source: 1})
     for act in end_activities:
         dfg.end_activities.update({act: 1})
     return dfg
