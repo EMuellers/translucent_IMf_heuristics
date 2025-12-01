@@ -13,6 +13,7 @@ from pm4py.objects.process_tree.obj import ProcessTree
 from enum import Enum
 from pm4py.util import exec_utils, constants
 from copy import copy
+from copy import deepcopy
 from translucent_discovery.translucent_inductive_miner.fall_through.empty_traces import EmptyTracesTranslucent
 from translucent_discovery.translucent_inductive_miner.utils import get_delta_arcs, get_sorted_delta_arcs
 
@@ -223,7 +224,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
     def apply_arc_removal_heuristics(self, obj: T, parameters: Optional[Dict[str, Any]] = None) -> Optional[Tuple[ProcessTree, List[T]]]:
         """Applies arc removal heuristics to try to find a cut in the modified tDFG. If no cut is found, None is returned."""
         candidate_arcs = get_delta_arcs(obj.tdfg, obj.dfg)
-        original_tdfg = copy(obj.tdfg)
+        original_tdfg = deepcopy(obj.tdfg)
         cut = None
         if len(candidate_arcs) > 0:
             sorted_arcs = get_sorted_delta_arcs(candidate_arcs, obj, criterion=parameters["remove_arcs_heuristics"])
