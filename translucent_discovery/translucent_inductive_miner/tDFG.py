@@ -89,11 +89,12 @@ def discover_frequent_dfg(log, subtract_xor=True, parameters={}) -> DFG:
             else:
                 dfg.graph.update({(source, target): count})
                 added_parallel_arcs.add((source, target))
-        for (source, target) in added_parallel_arcs and (source != target): # Exclude self-loops
-            if source in end_activities and target not in end_activities:
-                end_activities.update({target: end_activities[source]})
-            if target in end_activities and source not in end_activities:
-                end_activities.update({source: end_activities[target]})
+        for (source, target) in added_parallel_arcs:
+            if source != target: # Exclude self-loops
+                if source in end_activities and target not in end_activities:
+                    end_activities.update({target: end_activities[source]})
+                if target in end_activities and source not in end_activities:
+                    end_activities.update({source: end_activities[target]})
     for act in end_activities:
         dfg.end_activities.update({act: end_activities[act]})
     return dfg
