@@ -126,7 +126,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                     if tree is None:
                         if not second_iteration_translucent: # Hier bevor filter heuristic
                             if parameters.get("remove_arcs_heuristics", False) and parameters["delta_heuristic_frequent"] == "before": # Apply Arc Removal Heuristics before filtering
-                                cut = self.apply_arc_removal_heuristics(obj, parameters) # TODO: Should we keep the old tdfg here?
+                                cut = self.apply_arc_removal_heuristics(obj, parameters)
                                 if cut is not None:
                                     tree = self._recurse(cut[0], cut[1], parameters=parameters)
                             if tree is None:
