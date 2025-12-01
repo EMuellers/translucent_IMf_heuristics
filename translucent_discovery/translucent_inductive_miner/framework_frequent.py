@@ -14,6 +14,7 @@ from enum import Enum
 from pm4py.util import exec_utils, constants
 from copy import copy
 from translucent_discovery.translucent_inductive_miner.fall_through.empty_traces import EmptyTracesTranslucent
+from translucent_discovery.translucent_inductive_miner.utils import get_delta_arcs, get_sorted_delta_arcs
 
 T = TypeVar('T', bound=IMDataStructure)
 
@@ -123,16 +124,21 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                     if cut is not None:
                         tree = self._recurse(cut[0], cut[1], parameters=parameters)
                     if tree is None:
-                        if not second_iteration_translucent:
-                            filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, translucent=True, parameters=parameters)
-                            tree = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True)
+                        if not second_iteration_translucent: # Hier bevor filter heuristic
+                            if parameters.get("remove_arcs_heuristics", False) and parameters["delta_heuristic_frequent"] == "before": # Apply Arc Removal Heuristics before filtering
+                                cut = self.apply_arc_removal_heuristics(obj, parameters) # TODO: Should we keep the old tdfg here?
+                                if cut is not None:
+                                    tree = self._recurse(cut[0], cut[1], parameters=parameters)
                             if tree is None:
-                                if parameters["tDFG_fall_through"]:
-                                    parameters["tDFG"] = True
-                                else:
-                                    parameters["tDFG"] = False
-                                ft = self.fall_through(obj, parameters)
-                                tree = self._recurse(ft[0], ft[1], parameters=parameters)
+                                filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, translucent=True, parameters=parameters)
+                                tree = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True)
+                                if tree is None:
+                                    if parameters["tDFG_fall_through"]:
+                                        parameters["tDFG"] = True
+                                    else:
+                                        parameters["tDFG"] = False
+                                    ft = self.fall_through(obj, parameters)
+                                    tree = self._recurse(ft[0], ft[1], parameters=parameters)
             elif parameters["translucent_variant"] == "IMts":
                 parameters["tDFG"] = False
                 cut = self.find_cut(obj, parameters)
@@ -213,3 +219,19 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
             return IMDataStructureTranslucent(obj.data_structure, obj.log, tdfg = dfg, frequent=obj.frequent, parameters=parameters)
         else:
             return IMDataStructureTranslucent(obj.data_structure, obj.log, dfg = dfg, frequent=obj.frequent, parameters=parameters)
+    
+    def apply_arc_removal_heuristics(self, obj: T, parameters: Optional[Dict[str, Any]] = None) -> Optional[Tuple[ProcessTree, List[T]]]:
+        """Applies arc removal heuristics to try to find a cut in the modified tDFG. If no cut is found, None is returned."""
+        candidate_arcs = get_delta_arcs(obj.tdfg, obj.dfg)
+        original_tdfg = copy(obj.tdfg)
+        cut = None
+        if len(candidate_arcs) > 0:
+            sorted_arcs = get_sorted_delta_arcs(candidate_arcs, obj, criterion=parameters["remove_arcs_heuristics"])
+            # Remove worst arcs one by one and try to find a cut
+            for arc, score in sorted_arcs:
+                del obj.tdfg.graph[arc]
+                cut = self.find_cut(obj, parameters)
+                if cut is not None:
+                    return cut
+        obj.tdfg = original_tdfg
+        return cut
