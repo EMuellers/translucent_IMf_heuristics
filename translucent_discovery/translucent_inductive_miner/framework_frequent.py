@@ -233,5 +233,5 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                 cut = self.find_cut(obj, parameters)
                 if cut is not None:
                     return cut
-        obj.tdfg = original_tdfg
+        obj._tdfg = original_tdfg
         return cut

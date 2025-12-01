@@ -154,11 +154,10 @@ class InductiveMinerFrameworkTranslucent(ABC, Generic[T]):
         if len(candidate_arcs) > 0:
             sorted_arcs = get_sorted_delta_arcs(candidate_arcs, obj, criterion=parameters["remove_arcs_heuristics"])
             # Remove worst arcs one by one and try to find a cut
-            # TODO: Do we want to keep a copy of the original tDFG?
             for arc, score in sorted_arcs:
                 del obj.tdfg.graph[arc]
                 cut = self.find_cut(obj, parameters)
                 if cut is not None:
                     return cut
-        obj.tdfg = original_tdfg
+        obj._tdfg = original_tdfg
         return cut
