@@ -13,7 +13,7 @@ import glob
 
 
 
-def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False):
+def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False, include_parameters_on_plot=False):
     if base == 0.8:
         base = "08"
     elif base == 0.6:
@@ -224,7 +224,15 @@ def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False):
     # Adjust layout
     plt.tight_layout()
 
-    # Save plot as a tight PDF
+    # Optionally add algorithm parameters text and save plot as a tight PDF
+    if include_parameters_on_plot:
+        try:
+            params_text = ', '.join([f"{k}={v}" for k, v in algo_parameters.items()]) if algo_parameters else "(no additional parameters)"
+        except Exception:
+            params_text = str(algo_parameters)
+        # Make room under the axes/legend and place parameters text in the bottom margin
+        fig.subplots_adjust(bottom=0.25)
+        fig.text(0.5, 0.02, f"Params: {params_text}", ha='center', fontsize=8)
     if not tDFG:
         plt.savefig('results/DFG_fall/'+base+"/"+threshold_str+"/result_5.pdf", bbox_inches="tight")
     else:
@@ -250,7 +258,15 @@ def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False):
     # Adjust layout
     plt.tight_layout()
 
-    # Save plot as a tight PDF
+    # Optionally add algorithm parameters text and save plot as a tight PDF
+    if include_parameters_on_plot:
+        try:
+            params_text = ', '.join([f"{k}={v}" for k, v in algo_parameters.items()]) if algo_parameters else "(no additional parameters)"
+        except Exception:
+            params_text = str(algo_parameters)
+        # Make room under the axes/legend and place parameters text in the bottom margin
+        fig.subplots_adjust(bottom=0.25)
+        fig.text(0.5, 0.02, f"Params: {params_text}", ha='center', fontsize=8)
     if not tDFG:
         plt.savefig('results/DFG_fall/'+base+"/"+threshold_str+"/result_10.pdf", bbox_inches="tight")
     else:
@@ -264,7 +280,7 @@ def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False):
 
 #Elias: Test
 logs = [0.4]
-model = [0]
+model = [0.4]
 
 tDFGs = [False]
 #Why do IM and pm4py IM differ in fitness and precision values? -> still probably fallthroughs...
@@ -282,6 +298,7 @@ algo_parameters = {
     
     ### PARAMETERS FOR FREQUENT ALGORITHM ###
     
+    "delta_heuristic_frequent": "before", # Signifies when to apply the remove arcs heuristic in the frequent case ("before" or "after" filtering)
     
     ### PARAMETERS THAT APPLY TO BOTH ###
     
@@ -289,10 +306,11 @@ algo_parameters = {
     
     "remove_arcs_heuristics": "dependency_score", # Remove arcs exclusive to tDFG before applying fall throughs ("dependency_score"), set to False to disable
     
-    "parallel_end_activities_heuristic": False # If two activities are in translucent parallel relation and one is an end activity, the other is also considered an end activity #TODO: Implement
+    "parallel_end_activities_heuristic": False # If two activities are in translucent parallel relation and one is an end activity, the other is also considered an end activity in the (frequent) tDFG
+
 }
 
 for log in logs:
     for s2 in model:
         for tdfg in tDFGs:
-            evaluate(log, tdfg, s2, algo_parameters, print_models=True)
+            evaluate(log, tdfg, s2, algo_parameters, print_models=True, include_parameters_on_plot=True)

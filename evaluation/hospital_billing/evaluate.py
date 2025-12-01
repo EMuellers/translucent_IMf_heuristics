@@ -13,7 +13,7 @@ import glob
 
 
 
-def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False):
+def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False, include_parameters_on_plot=False):
     if base == 0.8:
         base = "08"
     elif base == 0.6:
@@ -216,7 +216,15 @@ def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False):
     # Adjust layout
     plt.tight_layout()
 
-    # Save plot as a tight PDF
+    # Optionally add algorithm parameters text and save plot as a tight PDF
+    if include_parameters_on_plot:
+        try:
+            params_text = ', '.join([f"{k}={v}" for k, v in algo_parameters.items()]) if algo_parameters else "(no additional parameters)"
+        except Exception:
+            params_text = str(algo_parameters)
+        # Make room under the axes/legend and place parameters text in the bottom margin
+        fig.subplots_adjust(bottom=0.25)
+        fig.text(0.5, 0.02, f"Params: {params_text}", ha='center', fontsize=8)
     if not tDFG:
         plt.savefig('results/DFG_fall/'+base+"/"+threshold_str+"/result_5.pdf", bbox_inches="tight")
     else:
@@ -242,7 +250,15 @@ def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False):
     # Adjust layout
     plt.tight_layout()
 
-    # Save plot as a tight PDF
+    # Optionally add algorithm parameters text and save plot as a tight PDF
+    if include_parameters_on_plot:
+        try:
+            params_text = ', '.join([f"{k}={v}" for k, v in algo_parameters.items()]) if algo_parameters else "(no additional parameters)"
+        except Exception:
+            params_text = str(algo_parameters)
+        # Make room under the axes/legend and place parameters text in the bottom margin
+        fig.subplots_adjust(bottom=0.25)
+        fig.text(0.5, 0.02, f"Params: {params_text}", ha='center', fontsize=8)
     if not tDFG:
         plt.savefig('results/DFG_fall/'+base+"/"+threshold_str+"/result_10.pdf", bbox_inches="tight")
     else:
