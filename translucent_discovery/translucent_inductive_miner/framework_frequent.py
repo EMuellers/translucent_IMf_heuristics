@@ -81,9 +81,14 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                 if cut is not None:
                     tree = self._recurse(cut[0], cut[1], parameters=parameters)
                 if tree is None:
-                    if not second_iteration_translucent:
-                        filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, True, parameters=parameters)
-                        tree = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True)
+                    if not second_iteration_translucent: # Hier heuristik vor Filter
+                        if parameters.get("remove_arcs_heuristics", False) and parameters["delta_heuristic_frequent"] == "before": # Apply Arc Removal Heuristics before filtering
+                                cut = self.apply_arc_removal_heuristics(obj, parameters)
+                                if cut is not None:
+                                    tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                        if tree is None:
+                            filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, True, parameters=parameters)
+                            tree = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True)
                     if second_iteration_translucent:
                         parameters["tDFG"] = False
                         cut = self.find_cut(obj, parameters)
