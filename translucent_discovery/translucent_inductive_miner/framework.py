@@ -26,6 +26,7 @@ from translucent_discovery.translucent_inductive_miner.fall_through.empty_traces
 from pm4py.algo.discovery.inductive.variants.instances import IMInstance
 from pm4py.objects.process_tree.obj import ProcessTree
 from enum import Enum
+from copy import copy
 from pm4py.util import exec_utils, constants
 from translucent_discovery.translucent_inductive_miner.utils import get_delta_arcs, get_sorted_delta_arcs
 
@@ -94,7 +95,7 @@ class InductiveMinerFrameworkTranslucent(ABC, Generic[T]):
                     if cut is not None:
                         parameters["tDFG"] = True
                         tree = self._recurse(cut[0], cut[1], parameters=parameters, level=level)
-            elif parameters["translucent_variant"] == "IM": #TODO: Should we also apply arc removal heuristics here?
+            elif parameters["translucent_variant"] == "IM":
                 parameters["tDFG"] = False
                 cut = self.find_cut(obj, parameters)
                 if cut is not None:
@@ -148,6 +149,7 @@ class InductiveMinerFrameworkTranslucent(ABC, Generic[T]):
     def apply_arc_removal_heuristics(self, obj: T, parameters: Optional[Dict[str, Any]] = None) -> Optional[Tuple[ProcessTree, List[T]]]:
         """Applies arc removal heuristics to try to find a cut in the modified tDFG. If no cut is found, None is returned."""
         candidate_arcs = get_delta_arcs(obj.tdfg, obj.dfg)
+        original_tdfg = copy(obj.tdfg)
         cut = None
         if len(candidate_arcs) > 0:
             sorted_arcs = get_sorted_delta_arcs(candidate_arcs, obj, criterion=parameters["remove_arcs_heuristics"])
@@ -157,5 +159,6 @@ class InductiveMinerFrameworkTranslucent(ABC, Generic[T]):
                 del obj.tdfg.graph[arc]
                 cut = self.find_cut(obj, parameters)
                 if cut is not None:
-                    break
+                    return cut
+        obj.tdfg = original_tdfg
         return cut
