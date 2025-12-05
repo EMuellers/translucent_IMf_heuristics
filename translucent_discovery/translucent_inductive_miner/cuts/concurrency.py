@@ -84,6 +84,7 @@ class ConcurrencyCutTranslucent(ConcurrencyCut[IMDataStructureTranslucent]):
         for g in groups:
             c = Counter()
             for t in obj.data_structure:
-                c[tuple(filter(lambda e: e in g, t))] = obj.data_structure[t]
+                # Fixed pm4py bug
+                c[tuple(filter(lambda e: e in g, t))] += obj.data_structure[t]
             r.append(c)
         return list(map(lambda l: IMDataStructureTranslucent(l, obj.log, frequent=obj.frequent), r))
