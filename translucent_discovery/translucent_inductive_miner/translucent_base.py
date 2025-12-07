@@ -10,6 +10,7 @@ import pandas as pd
 import pm4py
 from translucent_discovery.translucent_inductive_miner.data_structure import IMDataStructureTranslucent
 from pm4py.objects.conversion.log import converter as log_converter
+from translucent_discovery.translucent_inductive_miner.translucent_datatype import translucent_log_to_tcl, tcl_to_uvcl, TCL 
 
 #Elias: Quasi das discovery.py Äquivalent in pm4py
 
@@ -26,14 +27,15 @@ def discover_process_tree(log, parameters, noise_threshold):
     if isinstance(log, pd.DataFrame):
         log = log_converter.apply(log, variant=log_converter.Variants.TO_EVENT_LOG)
     uvcl = comut.get_variants(comut.project_univariate(log, key=ack, df_glue=cidk, df_sorting_criterion_key=tk))
+    tcl = translucent_log_to_tcl(log)
     if noise_threshold == 0:
         im = IM(parameters)
-        temp = IMDataStructureTranslucent(uvcl, log, parameters=parameters)
+        temp = IMDataStructureTranslucent(uvcl, tcl, log, parameters=parameters)
         return im.apply(temp, parameters)
     else:
         imf = IMF(parameters)
         parameters["noise_threshold"] = noise_threshold
-        temp = IMDataStructureTranslucent(uvcl, log, frequent=True, parameters=parameters)
+        temp = IMDataStructureTranslucent(uvcl, tcl, log, frequent=True, parameters=parameters)
         return imf.apply(temp, parameters)
 
 
