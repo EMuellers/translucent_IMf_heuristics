@@ -16,6 +16,7 @@ import pm4py
 
 #uvcl: trace variant and count (keine Attribute, nur Aktivitäten)
 #Needed as uvcl does not contain translucent information
+#!PROBLEM: If one ref_trace in uvcl is a sub trace of another (e.g. single activity and self-loop of that activity) the number of traces increases artificially 
 def split_log(uvcl, log):
     variants = get_translucent_trace_variants(log)
     variant_log = EventLog(attributes=log.attributes, extensions=log.extensions, classifiers=log.classifiers,
