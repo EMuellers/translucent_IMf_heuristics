@@ -89,9 +89,20 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                         if tree is None:
                             filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, True, parameters=parameters)
                             tree = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True)
-                    if second_iteration_translucent:
+                    if second_iteration_translucent: # Hier Heuristik nach Filter
+                        """
+                        if parameters.get("remove_arcs_heuristics", False) and parameters["delta_heuristic_frequent_after"]: # Apply Arc Removal Heuristics after filtering
+                            temp_dfg = deepcopy(obj.dfg)
+                            temp_filtered_dfg_ds = self.__filter_dfg_noise(obj, noise_threshold, False, parameters=parameters)
+                            cut = self.apply_arc_removal_heuristics(filtered_ds, parameters) # use the filtered datastructure here to use both the filtered tDFG and DFG
+                            if cut is not None:
+                                tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                            else: # restore original dfg
+                                obj.dfg = temp_dfg
+                        """
+                        #TODO: Check if filtered_ds in IMto includes the filtered tDFG or if obj should be handed over instead!
                         parameters["tDFG"] = False
-                        cut = self.find_cut(obj, parameters)
+                        cut = self.find_cut(obj, parameters) # performed on DFG
                         if cut is not None:
                             parameters["tDFG"] = True
                             tree = self._recurse(cut[0], cut[1], parameters=parameters)
@@ -139,12 +150,20 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                                 filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, translucent=True, parameters=parameters)
                                 tree = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True)
                                 if tree is None:
-                                    if parameters["tDFG_fall_through"]:
-                                        parameters["tDFG"] = True
-                                    else:
-                                        parameters["tDFG"] = False
-                                    ft = self.fall_through(obj, parameters)
-                                    tree = self._recurse(ft[0], ft[1], parameters=parameters)
+                                    # Get the filtered dfg (we can do this here as the IMf performs fallthroughs on the filtered DFG anyways, so this is more correct!)
+                                    filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, translucent=False, parameters=parameters)
+                                    obj._dfg = filtered_ds.dfg # Update the dfg to the filtered one for the fallthrough
+                                    if parameters.get("remove_arcs_heuristics", False) and parameters["delta_heuristic_frequent_after"]: # Apply Arc Removal Heuristics after filtering
+                                        cut = self.apply_arc_removal_heuristics(obj, parameters)
+                                        if cut is not None:
+                                            tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                                    if tree is None:        
+                                        if parameters["tDFG_fall_through"]:
+                                            parameters["tDFG"] = True
+                                        else:
+                                            parameters["tDFG"] = False
+                                        ft = self.fall_through(obj, parameters)
+                                        tree = self._recurse(ft[0], ft[1], parameters=parameters)
             elif parameters["translucent_variant"] == "IMts":
                 parameters["tDFG"] = False
                 cut = self.find_cut(obj, parameters)
