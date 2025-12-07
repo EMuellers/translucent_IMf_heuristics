@@ -298,9 +298,9 @@ algo_parameters = {
     
     ### PARAMETERS FOR FREQUENT ALGORITHM ###
     
-    "delta_heuristic_frequent_before": True, # Signifies if to apply the remove arcs heuristic in the frequent case on the unfiltered tDFG
+    "delta_heuristic_frequent_before": False, # Signifies if to apply the remove arcs heuristic in the frequent case on the unfiltered tDFG
     
-    "delta_heuristic_frequent_after": False, # Signifies if to apply the remove arcs heuristic in the frequent case on the filtered tDFG
+    "delta_heuristic_frequent_after": True, # Signifies if to apply the remove arcs heuristic in the frequent case on the filtered tDFG
     
     ### PARAMETERS THAT APPLY TO BOTH ###
     
