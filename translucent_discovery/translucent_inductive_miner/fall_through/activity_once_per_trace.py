@@ -21,7 +21,8 @@ from translucent_discovery.translucent_inductive_miner.data_structure import IMD
 from translucent_discovery.translucent_inductive_miner.fall_through.activity_concurrent import ActivityConcurrentTranslucent
 from pm4py.util.compression import util as comut
 
-
+# No projection performed here, so it can stay this way for TCL
+#TODO: In the future, we could use translucent information to see if an activity can really only occur once per trace
 class ActivityOncePerTraceTranslucent(ActivityConcurrentTranslucent):
 
     @classmethod
