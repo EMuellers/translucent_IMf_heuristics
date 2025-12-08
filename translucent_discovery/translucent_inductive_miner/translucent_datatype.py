@@ -28,6 +28,13 @@ def tcl_to_uvcl(tcl: TCL) -> UVCL:
         uvcl[ref_trace] += count
     return uvcl
 
+def get_executed_activities(tcl: TCL) -> set[str]:
+    executed_activities = set()
+    for variant in tcl.keys():
+        for event in variant:
+            executed_activities.add(event[0])
+    return executed_activities
+
 
 if __name__ == "__main__":
     # Testing some functionality
