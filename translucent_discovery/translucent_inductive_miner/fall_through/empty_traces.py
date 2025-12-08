@@ -28,13 +28,13 @@ class EmptyTracesTranslucent(FallThrough[IMDataStructureTranslucent]):
     def apply(cls, obj: IMDataStructureTranslucent, pool=None, manager=None, parameters: Optional[Dict[str, Any]] = None) -> Optional[
         Tuple[ProcessTree, List[IMDataStructureTranslucent]]]:
         if cls.holds(obj, parameters):
-            data_structure = copy(obj.data_structure)
+            data_structure = copy(obj.tcl)
             del data_structure[()]
-            return ProcessTree(operator=Operator.XOR), [IMDataStructureTranslucent(Counter(), obj.log, frequent=obj.frequent),
-                                                        IMDataStructureTranslucent(data_structure, obj.log, frequent=obj.frequent)]
+            return ProcessTree(operator=Operator.XOR), [IMDataStructureTranslucent(Counter(), Counter(), obj.log, frequent=obj.frequent),
+                                                        IMDataStructureTranslucent(None, data_structure, obj.log, frequent=obj.frequent)]
         else:
             return None
 
     @classmethod
     def holds(cls, obj: IMDataStructureTranslucent, parameters: Optional[Dict[str, Any]] = None) -> bool:
-        return len(list(filter(lambda t: len(t) == 0, obj.data_structure))) > 0
+        return len(list(filter(lambda t: len(t) == 0, obj.data_structure))) > 0 # Checking for empty traces on the UVCL is fine, as if they exist in the UVCL they also exist in the TCL
