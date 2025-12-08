@@ -77,3 +77,23 @@ class ExclusiveChoiceCutTranslucent(ExclusiveChoiceCut[IMDataStructureTranslucen
                     new_trace = new_trace + (e,)
             logs[count[0][0]].update({new_trace: obj.data_structure[t]})
         return list(map(lambda l: IMDataStructureTranslucent(l, obj.log, frequent=obj.frequent), logs))
+
+#TODO: Make compatible with TCL
+#TODO: Check if this is correct
+class ExclusiveChoiceCutTranslucentTCL(ExclusiveChoiceCut[IMDataStructureTranslucent]):
+    @classmethod
+    def project(cls, obj: IMDataStructureTranslucent, groups: List[Collection[Any]], parameters: Optional[Dict[str, Any]] = None) -> List[IMDataStructureTranslucent]:
+        logs = [Counter() for g in groups]
+        for t in obj.tcl:
+            count = {i: 0 for i in range(len(groups))}
+            for index, group in enumerate(groups):
+                for e in t:
+                    if e[0] in group:
+                        count[index] += 1
+            count = sorted(list((x, y) for x, y in count.items()), key=lambda x: (x[1], x[0]), reverse=True)
+            new_trace = tuple()
+            for e in t:
+                if e[0] in groups[count[0][0]]:
+                    new_trace = new_trace + (e,)
+            logs[count[0][0]].update({new_trace: obj.tcl[t]})
+        return list(map(lambda l: IMDataStructureTranslucent(None, l, obj.log, frequent=obj.frequent), logs))
