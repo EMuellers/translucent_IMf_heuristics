@@ -41,7 +41,7 @@ class FlowerModelTranslucent(FallThrough[IMDataStructureTranslucent]):
         for a in sorted(list(comut.get_alphabet(log))): # more deterministic behavior
             uvcl_do[(a,)] = 1
         uvcl_redo = UVCL()
-        im_uvcl_do = IMDataStructureTranslucent(uvcl_do, obj.log, frequent=obj.frequent)
-        im_uvcl_redo = IMDataStructureTranslucent(uvcl_redo, obj.log, frequent=obj.frequent)
+        im_uvcl_do = IMDataStructureTranslucent(uvcl_do, obj.log, frequent=obj.frequent, parameters=parameters)
+        im_uvcl_redo = IMDataStructureTranslucent(uvcl_redo, obj.log, frequent=obj.frequent, parameters=parameters)
         return ProcessTree(operator=Operator.LOOP), [im_uvcl_do, im_uvcl_redo]
 
