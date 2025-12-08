@@ -107,3 +107,82 @@ class ActivityConcurrentTranslucent(FallThrough[IMDataStructureTranslucent]):
             l_a.update({tuple(filter(lambda e: e == candidate, t)): log[t]})
             l_other.update({tuple(filter(lambda e: e != candidate, t)): log[t]})
         return ProcessTree(operator=Operator.PARALLEL), [IMDataStructureTranslucent(l_a, obj.log, frequent=obj.frequent), IMDataStructureTranslucent(l_other, obj.log, frequent=obj.frequent)]
+
+# TCL variant of ActivityConcurrentTranslucent
+# TODO add TCL varaiant that inherits this class in activity_once_per_trace.py!
+class ActivityConcurrentTranslucentTCL(FallThrough[IMDataStructureTranslucent]):
+    MULTI_PROCESSING_LOWER_BOUND = 20
+
+    @classmethod
+    def _process_candidate(cls, c: Any, d: IMDataStructureTranslucent, queue=None, ev=None, parameters: Optional[Dict[str, Any]] = None):
+        l_alt = Counter()
+        log = d.data_structure
+        for t in log:
+            l_alt[tuple(filter(lambda e: e != c, t))] = log[t]
+        cut = cls._find_cut(IMDataStructureTranslucent(l_alt, d.tcl, d.log), ev, parameters=parameters) # TODO: Should the plain IM be used for cut detection or not? + Remove log later!
+        if queue is not None:
+            queue.put((c, cut))
+        return cut if cut is not None else None
+
+    @classmethod
+    def _get_candidate(cls, obj: IMDataStructureTranslucent, pool, manager, parameters: Optional[Dict[str, Any]] = None) -> Optional[Any]:
+        if parameters is None:
+            parameters = {}
+
+        enable_multiprocessing = exec_utils.get_param_value(Parameters.MULTIPROCESSING, parameters, constants.ENABLE_MULTIPROCESSING_DEFAULT)
+
+        log = obj.data_structure
+        candidates = sorted(list(comut.get_alphabet(log))) # more deterministic behavior
+        if pool is None or manager is None or not enable_multiprocessing or len(candidates) <= ActivityConcurrentTranslucent.MULTI_PROCESSING_LOWER_BOUND:
+            for a in candidates:
+                cut = cls._process_candidate(a, obj, parameters=parameters)
+                if cut is not None:
+                    return a
+        else:
+            q = manager.Queue()
+            ev = manager.Event()
+            # avoid dangerous freealloc from Python's garbage collector
+            manager.support_list.append(q)
+            manager.support_list.append(ev)
+
+            for a in candidates:
+                pool.apply_async(cls._process_candidate, (a, log, q, ev, parameters))
+            potentials = set(candidates)
+            while len(potentials) > 0:
+                (c, cut) = q.get(block=True)
+                if cut is None:
+                    potentials.remove(c)
+                else:
+                    ev.set()
+                    return c
+
+        return None
+
+    @classmethod
+    def _find_cut(cls, obj: IMDataStructureTranslucent, ev, parameters: Optional[Dict[str, Any]] = None) -> Optional[Tuple[ProcessTree, List[IMDataStructureTranslucent]]]:
+        for c in CutFactory.get_cuts(obj, IMInstance.IM, parameters=parameters): # TODO We may need to return the non TCL cuts here because of how obj is build in process candidate
+            if ev is not None and ev.is_set():
+                return None
+            r = c.apply(obj, parameters)
+            if r is not None:
+                return r
+        return None
+
+    @classmethod
+    def holds(cls, obj: IMDataStructureTranslucent, parameters: Optional[Dict[str, Any]] = None) -> bool:
+        return cls._get_candidate(obj, None, None, parameters) is not None
+
+    @classmethod
+    def apply(cls, obj: IMDataStructureTranslucent, pool=None, manager=None, parameters: Optional[Dict[str, Any]] = None) -> Optional[
+        Tuple[ProcessTree, List[IMDataStructureTranslucent]]]:
+        candidate = cls._get_candidate(obj, pool, manager, parameters)
+        if candidate is None:
+            return None
+        log = obj.tcl
+        l_a = Counter()
+        l_other = Counter()
+        for t in log:
+            l_a.update({tuple(filter(lambda e: e[0] == candidate, t)): log[t]})
+            l_other.update({tuple(filter(lambda e: e[0] != candidate, t)): log[t]})
+        return ProcessTree(operator=Operator.PARALLEL), [IMDataStructureTranslucent(None, l_a, obj.log, frequent=obj.frequent, parameters=parameters), IMDataStructureTranslucent(None, l_other, obj.log, frequent=obj.frequent, parameters=parameters)]
+# TODO: remove log here later!
