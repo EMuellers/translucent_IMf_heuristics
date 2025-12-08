@@ -186,6 +186,26 @@ def get_parallel_relationships_frequent(log, executed_activities, enabled_activi
                     activity_parallel[(activity, executed_activity)] += number_of_occurrence
     return activity_parallel
 
+# get_parallel_relationships_frequent for tcl logs
+def get_parallel_relationships_frequent_tcl(log: TCL, executed_activities) -> dict:
+    activity_parallel = {}
+    for trace in log:
+        number_of_occurrence = log[trace]
+        for index, current_event in enumerate(trace):
+            if index < len(trace)-1:
+                executed_activity = current_event[0]
+                enabled_activities_current = current_event[1].intersection(executed_activities)
+                enabled_activities_next = trace[index+1][1].intersection(executed_activities)
+                still_enabled = enabled_activities_current.intersection(enabled_activities_next)
+                for activity in still_enabled:
+                    if (executed_activity, activity) not in activity_parallel:
+                        activity_parallel[(executed_activity, activity)] = 0
+                    activity_parallel[(executed_activity, activity)] += number_of_occurrence
+                    if (activity, executed_activity) not in activity_parallel:
+                        activity_parallel[(activity, executed_activity)] = 0
+                    activity_parallel[(activity, executed_activity)] += number_of_occurrence
+    return activity_parallel
+
 
 def get_start_activities_frequent(log, executed_activities, enabled_activities_key="enabled_activities"):
     start_activities = {}
