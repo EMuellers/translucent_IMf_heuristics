@@ -24,8 +24,8 @@ def get_start_activities_tcl(log: TCL, executed_activities):
     start_activities = set()
     for trace in log:
         if len(trace) > 0:
-            start_activities = trace[0][1]
-            for el in start_activities:
+            start_activities_current = trace[0][1]
+            for el in start_activities_current:
                 if el in executed_activities:
                     start_activities.add(el)
     return start_activities
@@ -60,8 +60,8 @@ def get_end_activities_tcl(log: TCL, executed_activities, strict_end_activities=
         at_least_once_end_activities = { log[variant][-1][0] for variant in log }
     for trace in log:
         if len(trace) > 0:
-            end_activities = trace[-1][1]
-            for el in end_activities:
+            end_activities_current = trace[-1][1]
+            for el in end_activities_current:
                 # include activity only if it's an executed activity and,
                 # when strict_end_activities is True, also only if it actually appeared
                 # as the final executed activity in at least one trace
