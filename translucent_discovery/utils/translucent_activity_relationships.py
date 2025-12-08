@@ -222,6 +222,20 @@ def get_start_activities_frequent(log, executed_activities, enabled_activities_k
                     start_activities[el.strip()] += number_of_occurrence
     return start_activities
 
+# get_start_activities_frequent for tcl logs
+def get_start_activities_frequent_tcl(log: TCL, executed_activities):
+    start_activities = {}
+    for trace in log:
+        number_of_occurrence = log[trace]
+        if len(trace) > 0:
+            start_activities_current = trace[0][1]
+            for el in start_activities_current:
+                if el in executed_activities:
+                    if el not in start_activities:
+                        start_activities[el] = 0
+                    start_activities[el] += number_of_occurrence
+    return start_activities
+
 
 def get_end_activities_frequent(log, executed_activities, enabled_activities_key="enabled_activities", strict_end_activities=False):
     end_activities = {}
