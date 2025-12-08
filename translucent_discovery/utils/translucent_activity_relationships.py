@@ -4,6 +4,7 @@ import pandas as pd
 import pm4py
 
 from translucent_discovery.translucent_inductive_miner.utils import get_translucent_trace_variants
+from translucent_discovery.translucent_inductive_miner.translucent_datatype import TCL
 
 
 def get_start_activities(log, executed_activities, enabled_activities_key="enabled_activities"):
@@ -91,6 +92,25 @@ def get_parallel_relationships(log, executed_activities, enabled_activities_key=
                 executed_activity = current_event["concept:name"]
                 enabled_activities_current = set([el.strip() for el in current_event[enabled_activities_key].split(",") if el.strip() in executed_activities])
                 enabled_activities_next = set([el.strip() for el in trace[index+1][enabled_activities_key].split(",") if el.strip() in executed_activities])
+                still_enabled = enabled_activities_current.intersection(enabled_activities_next)
+                for activity in still_enabled:
+                    if executed_activity not in activity_parallel:
+                        activity_parallel[executed_activity] = set()
+                    activity_parallel[executed_activity].add(activity)
+                    if activity not in activity_parallel:
+                        activity_parallel[activity] = set()
+                    activity_parallel[activity].add(executed_activity)
+    return activity_parallel
+
+# get_parallel_relationships for tcl logs
+def get_parallel_relationships_tcl(log: TCL, executed_activities, enabled_activities_key="enabled_activities") -> dict:
+    activity_parallel = {}
+    for trace in log:
+        for index, current_event in enumerate(trace):
+            if index < len(trace)-1:
+                executed_activity = current_event[0]
+                enabled_activities_current = current_event[1].intersection(executed_activities)
+                enabled_activities_next = trace[index+1][1].intersection(executed_activities)
                 still_enabled = enabled_activities_current.intersection(enabled_activities_next)
                 for activity in still_enabled:
                     if executed_activity not in activity_parallel:
