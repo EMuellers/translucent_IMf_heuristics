@@ -27,7 +27,7 @@ T = TypeVar('T', bound=IMDataStructure)
 S = TypeVar('S', bound=BaseCase)
 
 
-class BaseCaseFactory:
+class BaseCaseFactory: # All Base Cases perform checks on UVCL, but should be fine as we don't need to project any logs
 
     @classmethod
     def get_base_cases(cls, obj: T, inst: IMInstance, parameters: Optional[Dict[str, Any]] = None) -> List[S]:
