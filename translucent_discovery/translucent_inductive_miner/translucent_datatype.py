@@ -33,7 +33,7 @@ def get_executed_activities(tcl: TCL) -> set[str]:
     for variant in tcl.keys():
         for event in variant:
             executed_activities.add(event[0])
-    return executed_activities
+    return sorted(executed_activities)
 
 
 if __name__ == "__main__":
