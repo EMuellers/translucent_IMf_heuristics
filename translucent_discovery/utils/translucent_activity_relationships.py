@@ -260,6 +260,27 @@ def get_end_activities_frequent(log, executed_activities, enabled_activities_key
                     end_activities[el_s] += number_of_occurrence
     return end_activities
 
+# get_end_activities_frequent for tcl logs
+def get_end_activities_frequent_tcl(log: TCL, executed_activities, strict_end_activities=False):
+    end_activities = {}
+    #Change:
+    #Elias: Strict end activities only count those that actually appeared at the end of a trace at least once
+    if strict_end_activities:
+        at_least_once_end_activities = { log[variant][-1][0] for variant in log }
+    for trace in log:
+        number_of_occurrence = log[trace]
+        if len(trace) > 0:
+            end_activities_current = trace[-1][1]
+            for el in end_activities_current:
+                # include activity only if it's an executed activity and,
+                # when strict_end_activities is True, also only if it actually appeared
+                # as the final executed activity in at least one trace
+                if el in executed_activities and (not strict_end_activities or el in at_least_once_end_activities):
+                    if el not in end_activities:
+                        end_activities[el] = 0
+                    end_activities[el] += number_of_occurrence
+    return end_activities
+
 
 def get_choice_relationships_frequent(log, executed_activities, enabled_activities_key="enabled_activities") -> dict:
     activity_choice = {}
