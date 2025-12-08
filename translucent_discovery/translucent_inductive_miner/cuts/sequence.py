@@ -192,4 +192,59 @@ class StrictSequenceCutTranslucent(StrictSequenceCut[IMDataStructureTranslucent]
     @classmethod
     def holds(cls, obj: T, parameters: Optional[Dict[str, Any]] = None) -> Optional[List[Collection[Any]]]:
         return StrictSequenceCut.holds(obj, parameters)
+    
+#TODO: Make compatible with TCL
+#TODO: Check if this is correct
+class SequenceCutTranslucentTCL(SequenceCut[IMDataStructureTranslucent]):
+
+    @classmethod
+    def project(cls, obj: IMDataStructureTranslucent, groups: List[Collection[Any]], parameters: Optional[Dict[str, Any]] = None) -> List[IMDataStructureTranslucent]:
+        logs = [Counter() for g in groups]
+        for t in obj.tcl:
+            i = 0
+            split_point = 0
+            act_union = set()
+            while i < len(groups):
+                new_split_point = cls._find_split_point(
+                    t, groups[i], split_point, act_union)
+                trace_i = tuple()
+                j = split_point
+                while j < new_split_point:
+                    if t[j][0] in groups[i]:
+                        trace_i = trace_i + (t[j],)
+                    j = j + 1
+                logs[i].update({trace_i: obj.tcl[t]})
+                split_point = new_split_point
+                act_union = act_union.union(set(groups[i]))
+                i = i + 1
+        return list(map(lambda l: IMDataStructureTranslucent(None, l, obj.log, frequent=obj.frequent), logs))
+
+    @classmethod
+    def _find_split_point(cls, t: Tuple[Any], group: Collection[Any], start: int, ignore: Collection[Any], parameters: Optional[Dict[str, Any]] = None) -> int:
+        least_cost = 0
+        position_with_least_cost = start
+        cost = 0
+        i = start
+        while i < len(t):
+            if t[i][0] in group:
+                cost = cost - 1
+            elif t[i][0] not in ignore:
+                cost = cost + 1
+
+            if cost < least_cost:
+                least_cost = cost
+                position_with_least_cost = i + 1
+
+            i = i + 1
+
+        return position_with_least_cost
+
+
+#TODO: Make compatible with TCL
+# Implements sequence cut for TCL logs
+class StrictSequenceCutTranslucentTCL(StrictSequenceCut[IMDataStructureTranslucent], SequenceCutTranslucentTCL):
+
+    @classmethod
+    def holds(cls, obj: T, parameters: Optional[Dict[str, Any]] = None) -> Optional[List[Collection[Any]]]:
+        return StrictSequenceCut.holds(obj, parameters)
 
