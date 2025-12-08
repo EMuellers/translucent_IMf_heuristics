@@ -272,6 +272,26 @@ def get_choice_relationships_frequent(log, executed_activities, enabled_activiti
                     activity_choice[(activity, executed_activity)] += number_of_occurrence
     return activity_choice
 
+# get_choice_relationships_frequent for tcl logs
+def get_choice_relationships_frequent_tcl(log: TCL, executed_activities, enabled_activities_key="enabled_activities") -> dict:
+    activity_choice = {}
+    for trace in log:
+        number_of_occurrence = log[trace]
+        for index, current_event in enumerate(trace):
+            if index < len(trace)-1:
+                executed_activity = current_event[0]
+                enabled_activities_current = current_event[1].intersection(executed_activities)
+                enabled_activities_next = trace[index + 1][1].intersection(executed_activities)
+                removed_activities = enabled_activities_current.difference(enabled_activities_next)
+                for activity in removed_activities:
+                    if (executed_activity, activity) not in activity_choice:
+                        activity_choice[(executed_activity, activity)] = 0
+                    activity_choice[(executed_activity, activity)] += number_of_occurrence
+                    if (activity, executed_activity) not in activity_choice:
+                        activity_choice[(activity, executed_activity)] = 0
+                    activity_choice[(activity, executed_activity)] += number_of_occurrence
+    return activity_choice
+
 
 def get_directly_follow_relationships_frequent(log, executed_activities, enabled_activities_key="enabled_activities") -> dict:
     activity_follow = {}
