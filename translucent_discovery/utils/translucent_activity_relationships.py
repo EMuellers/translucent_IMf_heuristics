@@ -273,7 +273,7 @@ def get_choice_relationships_frequent(log, executed_activities, enabled_activiti
     return activity_choice
 
 # get_choice_relationships_frequent for tcl logs
-def get_choice_relationships_frequent_tcl(log: TCL, executed_activities, enabled_activities_key="enabled_activities") -> dict:
+def get_choice_relationships_frequent_tcl(log: TCL, executed_activities) -> dict:
     activity_choice = {}
     for trace in log:
         number_of_occurrence = log[trace]
@@ -303,6 +303,21 @@ def get_directly_follow_relationships_frequent(log, executed_activities, enabled
             if index < len(trace)-1:
                 executed_activity = current_event["concept:name"]
                 enabled_activities_next = [el.strip() for el in trace[index+1][enabled_activities_key].split(",") if el.strip() in executed_activities]
+                for next_activity in enabled_activities_next:
+                    if (executed_activity, next_activity) not in activity_follow:
+                        activity_follow[(executed_activity, next_activity)] = 0
+                    activity_follow[(executed_activity, next_activity)] += number_of_occurrence
+    return activity_follow
+
+# get_directly_follow_relationships_frequent for tcl logs
+def get_directly_follow_relationships_frequent_tcl(log: TCL, executed_activities) -> dict:
+    activity_follow = {}
+    for trace in log:
+        number_of_occurrence = log[trace]
+        for index, current_event in enumerate(trace):
+            if index < len(trace)-1:
+                executed_activity = current_event[0]
+                enabled_activities_next = trace[index+1][1].intersection(executed_activities)
                 for next_activity in enabled_activities_next:
                     if (executed_activity, next_activity) not in activity_follow:
                         activity_follow[(executed_activity, next_activity)] = 0
