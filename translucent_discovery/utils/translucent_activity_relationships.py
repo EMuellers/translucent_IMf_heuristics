@@ -19,6 +19,17 @@ def get_start_activities(log, executed_activities, enabled_activities_key="enabl
                     start_activities.add(el.strip())
     return start_activities
 
+# start activities for tcl logs
+def get_start_activities_tcl(log: TCL, executed_activities):
+    start_activities = set()
+    for trace in log:
+        if len(trace) > 0:
+            start_activities = trace[0][1]
+            for el in start_activities:
+                if el in executed_activities:
+                    start_activities.add(el)
+    return start_activities
+
 
 def get_end_activities(log, executed_activities, enabled_activities_key="enabled_activities", strict_end_activities=False):
     end_activities = set()
@@ -50,6 +61,20 @@ def get_directly_follow_relationships(log, executed_activities, enabled_activiti
             if index < len(trace)-1:
                 executed_activity = current_event["concept:name"]
                 enabled_activities_next = [el.strip() for el in trace[index+1][enabled_activities_key].split(",") if el.strip() in executed_activities]
+                if executed_activity not in activity_follow:
+                    activity_follow[executed_activity] = set()
+                for next_activity in enabled_activities_next:
+                    activity_follow[executed_activity].add(next_activity)
+    return activity_follow
+
+# translucent directly follows for tcl
+def get_directly_follow_relationships_tcl(log: TCL, executed_activities) -> dict:
+    activity_follow = {}
+    for trace in log:
+        for index, current_event in enumerate(trace):
+            if index < len(trace)-1:
+                executed_activity = current_event[0]
+                enabled_activities_next = trace[index+1][1].intersection(executed_activities)
                 if executed_activity not in activity_follow:
                     activity_follow[executed_activity] = set()
                 for next_activity in enabled_activities_next:
@@ -103,7 +128,7 @@ def get_parallel_relationships(log, executed_activities, enabled_activities_key=
     return activity_parallel
 
 # get_parallel_relationships for tcl logs
-def get_parallel_relationships_tcl(log: TCL, executed_activities, enabled_activities_key="enabled_activities") -> dict:
+def get_parallel_relationships_tcl(log: TCL, executed_activities) -> dict:
     activity_parallel = {}
     for trace in log:
         for index, current_event in enumerate(trace):
