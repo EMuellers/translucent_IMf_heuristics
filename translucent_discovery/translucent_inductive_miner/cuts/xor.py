@@ -79,7 +79,7 @@ class ExclusiveChoiceCutTranslucent(ExclusiveChoiceCut[IMDataStructureTranslucen
         return list(map(lambda l: IMDataStructureTranslucent(l, obj.log, frequent=obj.frequent), logs))
 
 #TODO: Make compatible with TCL
-#TODO: Check if this is correct
+#TODO: Check if this is correct (was pretty straightforward?)
 class ExclusiveChoiceCutTranslucentTCL(ExclusiveChoiceCut[IMDataStructureTranslucent]):
     @classmethod
     def project(cls, obj: IMDataStructureTranslucent, groups: List[Collection[Any]], parameters: Optional[Dict[str, Any]] = None) -> List[IMDataStructureTranslucent]:
@@ -96,4 +96,4 @@ class ExclusiveChoiceCutTranslucentTCL(ExclusiveChoiceCut[IMDataStructureTranslu
                 if e[0] in groups[count[0][0]]:
                     new_trace = new_trace + (e,)
             logs[count[0][0]].update({new_trace: obj.tcl[t]})
-        return list(map(lambda l: IMDataStructureTranslucent(None, l, obj.log, frequent=obj.frequent), logs))
+        return list(map(lambda l: IMDataStructureTranslucent(None, l, obj.log, frequent=obj.frequent, parameters=parameters), logs))
