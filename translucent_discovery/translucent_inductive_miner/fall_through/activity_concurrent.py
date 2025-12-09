@@ -119,7 +119,7 @@ class ActivityConcurrentTranslucentTCL(FallThrough[IMDataStructureTranslucent]):
         log = d.data_structure
         for t in log:
             l_alt[tuple(filter(lambda e: e != c, t))] = log[t]
-        cut = cls._find_cut(IMDataStructureTranslucent(l_alt, d.tcl, d.log), ev, parameters=parameters) # TODO: Should the plain IM be used for cut detection or not? + Remove log later!
+        cut = cls._find_cut(IMDataStructureTranslucent(l_alt, d.tcl, frequent=d.frequent), ev, parameters=parameters) # TODO: Should the plain IM be used for cut detection or not? + Remove log later!
         if queue is not None:
             queue.put((c, cut))
         return cut if cut is not None else None
