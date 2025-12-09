@@ -22,6 +22,7 @@ from pm4py.algo.discovery.inductive.fall_through.abc import FallThrough
 from pm4py.objects.process_tree.obj import ProcessTree, Operator
 from pm4py.util.compression import util as comut
 from pm4py.util.compression.dtypes import UVCL
+from translucent_discovery.translucent_inductive_miner.translucent_datatype import TCL, get_start_activities_tcl, get_end_activities_tcl
 
 
 class StrictTauLoopTranslucent(FallThrough[IMDataStructureTranslucent]):
@@ -51,3 +52,32 @@ class StrictTauLoopTranslucent(FallThrough[IMDataStructureTranslucent]):
         proj = cls._get_projected_log(log)
         if sum(proj.values()) > sum(log.values()):
             return ProcessTree(operator=Operator.LOOP), [IMDataStructureTranslucent(proj, obj.log, frequent=obj.frequent), IMDataStructureTranslucent(Counter(), obj.log, frequent=obj.frequent)]
+
+#TODO: Implement TCL Version
+class StrictTauLoopTranslucentTCL(FallThrough[IMDataStructureTranslucent]):
+
+    @classmethod
+    def _get_projected_log(cls, log: TCL, parameters: Optional[Dict[str, Any]] = None) -> TCL:
+        start_activities = get_start_activities_tcl(log)
+        end_activities = get_end_activities_tcl(log)
+        proj = Counter()
+        for t in log:
+            x = 0
+            for i in range(1, len(t)):
+                if t[i][0] in start_activities and t[i - 1][0] in end_activities:
+                    proj.update({t[x:i]: log[t]})
+                    x = i
+            proj.update({t[x:len(t)]: log[t]})
+        return proj
+
+    @classmethod
+    def holds(cls, obj: IMDataStructureTranslucent, parameters: Optional[Dict[str, Any]] = None) -> bool:
+        log = obj.tcl
+        return sum(cls._get_projected_log(log).values()) > sum(log.values())
+
+    @classmethod
+    def apply(cls, obj: IMDataStructureTranslucent, pool=None, manager=None, parameters: Optional[Dict[str, Any]] = None) -> Optional[Tuple[ProcessTree, List[IMDataStructureTranslucent]]]:
+        log = obj.tcl
+        proj = cls._get_projected_log(log)
+        if sum(proj.values()) > sum(log.values()):
+            return ProcessTree(operator=Operator.LOOP), [IMDataStructureTranslucent(None, proj, obj.log, frequent=obj.frequent, parameters=parameters), IMDataStructureTranslucent(None, Counter(), obj.log, frequent=obj.frequent, parameters=parameters)]

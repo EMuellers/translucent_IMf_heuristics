@@ -17,9 +17,10 @@
 from collections import Counter
 from typing import Optional, Dict, Any
 
-from translucent_discovery.translucent_inductive_miner.fall_through.strict_tau_loop import StrictTauLoopTranslucent
+from translucent_discovery.translucent_inductive_miner.fall_through.strict_tau_loop import StrictTauLoopTranslucent, StrictTauLoopTranslucentTCL
 from pm4py.util.compression import util as comut
 from pm4py.util.compression.dtypes import UVCL
+from translucent_discovery.translucent_inductive_miner.translucent_datatype import TCL, get_start_activities_tcl
 
 
 class TauLoopTranslucent(StrictTauLoopTranslucent):
@@ -32,6 +33,22 @@ class TauLoopTranslucent(StrictTauLoopTranslucent):
             x = 0
             for i in range(1, len(t)):
                 if t[i] in start_activities:
+                    proj.update({t[x:i]: log[t]})
+                    x = i
+            proj.update({t[x:len(t)]: log[t]})
+        return proj
+
+#TODO: Implement TCL Version
+class TauLoopTranslucentTCL(StrictTauLoopTranslucentTCL):
+
+    @classmethod
+    def _get_projected_log(cls, log: TCL, parameters: Optional[Dict[str, Any]] = None) -> TCL:
+        start_activities = get_start_activities_tcl(log)
+        proj = Counter()
+        for t in log:
+            x = 0
+            for i in range(1, len(t)):
+                if t[i][0] in start_activities:
                     proj.update({t[x:i]: log[t]})
                     x = i
             proj.update({t[x:len(t)]: log[t]})
