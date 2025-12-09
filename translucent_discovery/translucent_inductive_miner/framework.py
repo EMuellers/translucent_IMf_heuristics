@@ -74,15 +74,15 @@ class InductiveMinerFrameworkTranslucent(ABC, Generic[T]):
         return FallThroughFactory.fall_through(obj, self.instance(), self._pool, self._manager, parameters=parameters)
 
     def apply(self, obj: T, parameters: Optional[Dict[str, Any]] = None, level = 0) -> ProcessTree:
-        empty_traces = EmptyTracesTranslucent.apply(obj, parameters)
+        empty_traces = EmptyTracesTranslucent.apply(obj, parameters=parameters)
         if empty_traces is not None:
             return self._recurse(empty_traces[0], empty_traces[1], parameters=parameters, level=level)
-        tree = self.apply_base_cases(obj, parameters)
+        tree = self.apply_base_cases(obj, parameters=parameters)
         if tree is None:
             # IMtf
             if parameters["translucent_variant"] == "IMtf":
                 parameters["tDFG"] = True
-                cut = self.find_cut(obj, parameters)
+                cut = self.find_cut(obj, parameters=parameters)
                 if cut is not None:
                     tree = self._recurse(cut[0], cut[1], parameters=parameters, level=level)
                 elif parameters.get("remove_arcs_heuristics", False): # Apply Arc Removal Heuristics

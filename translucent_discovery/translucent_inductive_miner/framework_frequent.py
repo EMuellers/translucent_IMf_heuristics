@@ -62,7 +62,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
     def apply(self, obj: T, parameters: Optional[Dict[str, Any]] = None, second_iteration_translucent=False, second_iteration_normal = False) -> ProcessTree:
         noise_threshold = parameters["noise_threshold"]
 
-        empty_traces = EmptyTracesTranslucent.apply(obj, parameters)
+        empty_traces = EmptyTracesTranslucent.apply(obj, parameters=parameters)
         if empty_traces is not None:
             number_original_traces = sum(y for y in obj.data_structure.values())
             number_filtered_traces = sum(y for y in empty_traces[1][1].data_structure.values())
@@ -72,12 +72,12 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
             else:
                 obj = empty_traces[1][1]
 
-        tree = self.apply_base_cases(obj, parameters)
+        tree = self.apply_base_cases(obj, parameters=parameters)
         if tree is None:
             # First tDFG, then filtered tDFG, then DFG, then filtered DFG
             if parameters["translucent_variant"] == "IMtf":
                 parameters["tDFG"] = True
-                cut = self.find_cut(obj, parameters)
+                cut = self.find_cut(obj, parameters=parameters)
                 if cut is not None:
                     tree = self._recurse(cut[0], cut[1], parameters=parameters)
                 if tree is None:
