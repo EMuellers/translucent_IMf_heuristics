@@ -17,10 +17,10 @@
 from typing import List, Optional, Tuple, TypeVar, Dict, Any
 
 from pm4py.algo.discovery.inductive.cuts.abc import Cut
-from translucent_discovery.translucent_inductive_miner.cuts.concurrency import ConcurrencyCutTranslucent
-from translucent_discovery.translucent_inductive_miner.cuts.loop import LoopCutTranslucent
-from translucent_discovery.translucent_inductive_miner.cuts.sequence import StrictSequenceCutTranslucent, SequenceCutTranslucent
-from translucent_discovery.translucent_inductive_miner.cuts.xor import ExclusiveChoiceCutTranslucent
+from translucent_discovery.translucent_inductive_miner.cuts.concurrency import ConcurrencyCutTranslucent, ConcurrencyCutTranslucentTCL
+from translucent_discovery.translucent_inductive_miner.cuts.loop import LoopCutTranslucent, LoopCutTranslucentTCL
+from translucent_discovery.translucent_inductive_miner.cuts.sequence import StrictSequenceCutTranslucent, SequenceCutTranslucent, StrictSequenceCutTranslucentTCL
+from translucent_discovery.translucent_inductive_miner.cuts.xor import ExclusiveChoiceCutTranslucent, ExclusiveChoiceCutTranslucentTCL
 from pm4py.algo.discovery.inductive.dtypes.im_ds import IMDataStructure
 from translucent_discovery.translucent_inductive_miner.data_structure import IMDataStructureTranslucent
 from pm4py.algo.discovery.inductive.variants.instances import IMInstance
@@ -40,15 +40,22 @@ class Parameters(Enum):
 class CutFactory:
 
     #Elias: Gibt an welche Cuts erlaubt sind und in welcher Reihenfolge sie geprüft werden
+    #! TODO: ADD TCL VERSIONS OF CUTS
     @classmethod
-    def get_cuts(cls, obj: T, inst: IMInstance, parameters: Optional[Dict[str, Any]] = None) -> List[S]:
+    def get_cuts(cls, obj: T, inst: IMInstance, parameters: Optional[Dict[str, Any]] = None, tcl=True) -> List[S]:
         if parameters is None:
             parameters = {}
         disable_strict_sequence_cut = exec_utils.get_param_value(Parameters.DISABLE_STRICT_SEQUENCE_CUT, parameters, False)
-        sequence_cut = StrictSequenceCutTranslucent
+        if tcl:
+            sequence_cut = StrictSequenceCutTranslucentTCL
+        else:
+            sequence_cut = StrictSequenceCutTranslucent
         if disable_strict_sequence_cut:
             sequence_cut = SequenceCutTranslucent
-        return [ExclusiveChoiceCutTranslucent, sequence_cut, ConcurrencyCutTranslucent, LoopCutTranslucent]
+        if tcl:
+            return[ExclusiveChoiceCutTranslucentTCL, sequence_cut, ConcurrencyCutTranslucentTCL, LoopCutTranslucentTCL]
+        else:
+            return [ExclusiveChoiceCutTranslucent, sequence_cut, ConcurrencyCutTranslucent, LoopCutTranslucent]
 
     @classmethod
     def find_cut(cls, obj: IMDataStructure, inst: IMInstance, parameters: Optional[Dict[str, Any]] = None) -> Optional[Tuple[ProcessTree, List[T]]]:

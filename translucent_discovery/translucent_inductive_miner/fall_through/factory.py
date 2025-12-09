@@ -20,12 +20,12 @@ from typing import List, TypeVar, Tuple, Optional, Dict, Any
 from pm4py.algo.discovery.inductive.dtypes.im_ds import IMDataStructure
 from translucent_discovery.translucent_inductive_miner.data_structure import IMDataStructureTranslucent
 from pm4py.algo.discovery.inductive.fall_through.abc import FallThrough
-from translucent_discovery.translucent_inductive_miner.fall_through.activity_once_per_trace import ActivityOncePerTraceTranslucent
-from translucent_discovery.translucent_inductive_miner.fall_through.activity_once_per_trace import ActivityConcurrentTranslucent
+from translucent_discovery.translucent_inductive_miner.fall_through.activity_once_per_trace import ActivityOncePerTraceTranslucent, ActivityOncePerTraceTranslucentTCL
+from translucent_discovery.translucent_inductive_miner.fall_through.activity_once_per_trace import ActivityConcurrentTranslucent, ActivityConcurrentTranslucentTCL
 from translucent_discovery.translucent_inductive_miner.fall_through.empty_traces import EmptyTracesTranslucent
-from translucent_discovery.translucent_inductive_miner.fall_through.flower import FlowerModelTranslucent
-from translucent_discovery.translucent_inductive_miner.fall_through.strict_tau_loop import StrictTauLoopTranslucent
-from translucent_discovery.translucent_inductive_miner.fall_through.tau_loop import TauLoopTranslucent
+from translucent_discovery.translucent_inductive_miner.fall_through.flower import FlowerModelTranslucent, FlowerModelTranslucentTCL
+from translucent_discovery.translucent_inductive_miner.fall_through.strict_tau_loop import StrictTauLoopTranslucent, StrictTauLoopTranslucentTCL
+from translucent_discovery.translucent_inductive_miner.fall_through.tau_loop import TauLoopTranslucent, TauLoopTranslucentTCL
 from pm4py.algo.discovery.inductive.variants.instances import IMInstance
 from pm4py.objects.process_tree.obj import ProcessTree
 from pm4py.util import exec_utils
@@ -41,13 +41,14 @@ class Parameters(Enum):
 
 
 class FallThroughFactory:
-
+    #TODO: Add TCL VERSIONS!
     @classmethod
     def get_fall_throughs(cls, obj: T, inst: IMInstance, parameters: Optional[Dict[str, Any]] = None) -> List[S]:
         if parameters is None:
             parameters = {}
         if type(obj) is IMDataStructureTranslucent:
-            return [EmptyTracesTranslucent, ActivityOncePerTraceTranslucent, ActivityConcurrentTranslucent, StrictTauLoopTranslucent, TauLoopTranslucent, FlowerModelTranslucent]
+                return [EmptyTracesTranslucent, ActivityOncePerTraceTranslucentTCL, ActivityConcurrentTranslucentTCL, StrictTauLoopTranslucentTCL, TauLoopTranslucentTCL, FlowerModelTranslucentTCL]
+                #return [EmptyTracesTranslucent, ActivityOncePerTraceTranslucent, ActivityConcurrentTranslucent, StrictTauLoopTranslucent, TauLoopTranslucent, FlowerModelTranslucent]
 
     @classmethod
     def fall_through(cls, obj: T, inst: IMInstance, pool, manager, parameters: Optional[Dict[str, Any]] = None) -> Tuple[ProcessTree, List[T]]:
