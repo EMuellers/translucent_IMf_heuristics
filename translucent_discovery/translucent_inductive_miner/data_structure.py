@@ -48,10 +48,6 @@ class IMDataStructureTranslucent(IMDataStructureLog[UVCL]):
         return self._tdfg
 
     @property
-    def log(self):
-        return self._log
-
-    @property
     def frequent(self):
         return self._frequent
     
