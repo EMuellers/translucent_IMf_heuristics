@@ -96,4 +96,4 @@ class ExclusiveChoiceCutTranslucentTCL(ExclusiveChoiceCut[IMDataStructureTranslu
                 if e[0] in groups[count[0][0]]:
                     new_trace = new_trace + (e,)
             logs[count[0][0]].update({new_trace: obj.tcl[t]})
-        return list(map(lambda l: IMDataStructureTranslucent(None, l, obj.log, frequent=obj.frequent, parameters=parameters), logs))
+        return list(map(lambda l: IMDataStructureTranslucent(None, l, frequent=obj.frequent, parameters=parameters), logs))

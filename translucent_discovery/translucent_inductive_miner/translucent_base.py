@@ -30,12 +30,12 @@ def discover_process_tree(log, parameters, noise_threshold):
     tcl = translucent_log_to_tcl(log)
     if noise_threshold == 0:
         im = IM(parameters)
-        temp = IMDataStructureTranslucent(uvcl, tcl, log, parameters=parameters)
+        temp = IMDataStructureTranslucent(uvcl, tcl, parameters=parameters)
         return im.apply(temp, parameters)
     else:
         imf = IMF(parameters)
         parameters["noise_threshold"] = noise_threshold
-        temp = IMDataStructureTranslucent(uvcl, tcl, log, frequent=True, parameters=parameters)
+        temp = IMDataStructureTranslucent(uvcl, tcl, frequent=True, parameters=parameters)
         return imf.apply(temp, parameters)
 
 
