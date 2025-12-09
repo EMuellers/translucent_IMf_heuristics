@@ -190,7 +190,7 @@ class LoopCutTranslucent(LoopCut[IMDataStructureTranslucent]):
             do_log.update({do_trace: obj.data_structure[t]})
         logs = [do_log]
         logs.extend(redo_logs)
-        return list(map(lambda l: IMDataStructureTranslucent(l, frequent=obj.frequent, parameters=parameters), logs))
+        return list(map(lambda l: IMDataStructureTranslucent(l, Counter(), frequent=obj.frequent, parameters=parameters), logs))
 
     @classmethod
     def _append_trace_to_redo_log(cls, redo_trace: Tuple, redo_logs: List[UVCL], redo_groups: List[Collection[Any]],
