@@ -33,7 +33,7 @@ def get_sorted_delta_arcs(delta_arcs, obj, criterion = "dependency_score"):
         case _:
             raise NotImplementedError(f"Sorting criterion {criterion} not implemented.")
     
-
+#TODO: Adjust for tcl logs
 def _calculate_dependency_scores(delta_arcs, obj):
     """
     Returns the dependency scores for the given arcs. Calculated based on the translucent directly follows relationships.
