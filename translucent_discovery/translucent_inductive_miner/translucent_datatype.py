@@ -35,6 +35,27 @@ def get_executed_activities(tcl: TCL) -> set[str]:
             executed_activities.add(event[0])
     return set(sorted(executed_activities))
 
+def get_executed_events(tcl: TCL) -> set[TranslucentEvent]:
+    executed_events = set()
+    for variant in tcl.keys():
+        for event in variant:
+            executed_events.add(event)
+    return set(sorted(executed_events))
+
+def get_start_activities_tcl(tcl: TCL) -> Counter[str]:
+    starts = Counter()
+    for variant, count in tcl.items():
+        if len(variant) > 0:
+            starts[variant[0][0]] += count
+    return starts
+
+def get_end_activities_tcl(tcl: TCL) -> Counter[str]:
+    ends = Counter()
+    for variant, count in tcl.items():
+        if len(variant) > 0:
+            ends[variant[-1][0]] += count
+    return ends
+
 
 if __name__ == "__main__":
     # Testing some functionality
