@@ -160,7 +160,7 @@ class ActivityConcurrentTranslucentTCL(FallThrough[IMDataStructureTranslucent]):
 
     @classmethod
     def _find_cut(cls, obj: IMDataStructureTranslucent, ev, parameters: Optional[Dict[str, Any]] = None) -> Optional[Tuple[ProcessTree, List[IMDataStructureTranslucent]]]:
-        for c in CutFactory.get_cuts(obj, IMInstance.IM, parameters=parameters): # TODO We may need to return the non TCL cuts here because of how obj is build in process candidate
+        for c in CutFactory.get_cuts(obj, IMInstance.IM, parameters=parameters, tcl=False): # TODO We may need to return the non TCL cuts here because of how obj is build in process candidate
             if ev is not None and ev.is_set():
                 return None
             r = c.apply(obj, parameters)
