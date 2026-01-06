@@ -870,3 +870,5 @@ evaluation/hospital_billing/results/DFG_fall/04/00/models/IMts/imts_2.pnml
 evaluation/hospital_billing/results/DFG_fall/04/00/models/IMts/imts_3.pnml
 evaluation/hospital_billing/results/DFG_fall/04/00/models/IMts/imts_4.pnml
 evaluation/hospital_billing/results/DFG_fall/04/00/models/IMts/imts_5.pnml
+new_eval/original_datasets/
+new_eval/translucent_datasets/Sepsis/
