@@ -50,7 +50,6 @@ def generate_log_with_noise(path_to_log, noise_threshold, alignment_parameters, 
         variant_counter[counter] = len(variants[variant])
         counter += 1
     parameters = {star.Parameters.PARAM_ALIGNMENT_RESULT_IS_SYNC_PROD_AWARE: True}
-    #parameters={}
     rg = ReachabilityGraph(net, im, fm, 1)
     drg = DirectReachabilityGraph(rg).dfa
     global_case_id_counter = 1
