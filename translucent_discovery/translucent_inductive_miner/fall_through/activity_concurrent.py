@@ -109,7 +109,6 @@ class ActivityConcurrentTranslucent(FallThrough[IMDataStructureTranslucent]):
         return ProcessTree(operator=Operator.PARALLEL), [IMDataStructureTranslucent(l_a, obj.log, frequent=obj.frequent), IMDataStructureTranslucent(l_other, obj.log, frequent=obj.frequent)]
 
 # TCL variant of ActivityConcurrentTranslucent
-# TODO add TCL varaiant that inherits this class in activity_once_per_trace.py!
 class ActivityConcurrentTranslucentTCL(FallThrough[IMDataStructureTranslucent]):
     MULTI_PROCESSING_LOWER_BOUND = 20
 
@@ -185,4 +184,3 @@ class ActivityConcurrentTranslucentTCL(FallThrough[IMDataStructureTranslucent]):
             l_a.update({tuple(filter(lambda e: e[0] == candidate, t)): log[t]})
             l_other.update({tuple(filter(lambda e: e[0] != candidate, t)): log[t]})
         return ProcessTree(operator=Operator.PARALLEL), [IMDataStructureTranslucent(None, l_a, frequent=obj.frequent, parameters=parameters), IMDataStructureTranslucent(None, l_other, frequent=obj.frequent, parameters=parameters)]
-# TODO: remove log here later!

@@ -48,7 +48,7 @@ def discover_dfg(log, parameters={}) -> DFG:
         dfg.end_activities.update({act: 1})
     return dfg
 
-# TODO: Make this work with tcl
+
 def discover_dfg_tcl(log: TCL, parameters={}) -> DFG:
     dfg = DFG()
     executed_activities = get_executed_activities(log)
@@ -133,7 +133,6 @@ def discover_frequent_dfg(log, subtract_xor=True, parameters={}) -> DFG:
         dfg.end_activities.update({act: end_activities[act]})
     return dfg
 
-# TODO: Make this work with tcl
 def discover_frequent_dfg_tcl(log: TCL, subtract_xor=True, parameters={}) -> DFG:
     dfg = DFG()
     executed_activities = get_executed_activities(log)
