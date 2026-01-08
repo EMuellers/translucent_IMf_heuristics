@@ -234,7 +234,21 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
         dfg_list = [x[0] for x in dfg_list]
         # filter the elements in the DFG
         graph = {x: y for x, y in dfg.items() if x in dfg_list}
-
+        
+        # apply filtering to start activities
+        start_max_occ = max(start_activities.values())
+        start_activities = {x: y for x, y in start_activities.items()
+             if y >= start_max_occ * noise_threshold
+        }
+        
+        # apply filtering to end activities only if translucent
+        #TODO: Ask Harry if this is intended behavior
+        if translucent:
+            end_max_occ = max(end_activities.values())
+            end_activities = {x: y for x, y in end_activities.items()
+                 if y >= end_max_occ * noise_threshold
+            }
+        
         dfg = DFG()
         for sa in start_activities:
             dfg.start_activities[sa] = start_activities[sa]
