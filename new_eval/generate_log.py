@@ -58,7 +58,7 @@ def generate_log_with_noise(path_to_log, noise_threshold, alignment_parameters, 
     for index, trace in enumerate(variant_log):
         node = frozenset({frozenset({0})}) # Indicates position in state space of the model
         alignment_result = alignment.apply(trace, net, im, fm, parameters=parameters) # Format: (Trace / Log, Model)
-        # TODO: Decide whether to sort the alignment here?
+        # No sorting of alignment, as order can be argued either way. Also we can have totally different optimal alignments.
         index_in_real_trace = 0
         for aligned_event in alignment_result["alignment"]:
             if aligned_event[1][1] == '>>': # Log only move
@@ -83,14 +83,15 @@ def generate_log_with_noise(path_to_log, noise_threshold, alignment_parameters, 
             trace_to_append = copy.deepcopy(trace)
             # Introduce noise by selecting a random subset of enabled activities per event
             for i in range(len(trace_to_append)):
-                activities = trace_to_append[i][enabled_activities_name].split(', ')
+                executed_activity = trace_to_append[i]["concept:name"]
+                activities = set(trace_to_append[i][enabled_activities_name].split(', '))
+                activities.discard(executed_activity)
                 # Introduce noise by randomly removing some enabled activities
                 k = random.randint(0, len(activities))
-                noisy_activities = random.sample(activities, k)
-                if len(noisy_activities) == 0:
-                    trace_to_append[i][enabled_activities_name] = ''
-                else:
-                    trace_to_append[i][enabled_activities_name] = ', '.join(noisy_activities)
+                noisy_activities = random.sample(list(activities), k)
+                # Ensure that the executed activity is always included (Definition of enabled activities!)
+                noisy_activities.append(executed_activity)
+                trace_to_append[i][enabled_activities_name] = ', '.join(noisy_activities)
             trace_to_append._set_attributes({"concept:name": str(global_case_id_counter)})
             annotated_log.append(trace_to_append)
             counter +=1
@@ -101,6 +102,7 @@ def generate_log_with_noise(path_to_log, noise_threshold, alignment_parameters, 
 if __name__ == "__main__":
     log_path = r"C:\\Users\\elias\\Masterarbeit_code\\Spielplatz\\Code_Harry\\TranslucentActivityRelationships-main\\evaluation\\sepsis\\Sepsis Cases - Event Log.xes.gz"
     noise_threshold = 0.8  # Example noise threshold
-    alignment_params = {} 
-
-    generate_log_with_noise(log_path, noise_threshold, alignment_params)
+    alignment_params = {}
+    #generate_log_with_noise(log_path, noise_threshold, alignment_params)
+    for noise_threshold in [0.2, 0.4, 0.6, 0.8, 1.0]: 
+        generate_log_with_noise(log_path, noise_threshold, alignment_params)
