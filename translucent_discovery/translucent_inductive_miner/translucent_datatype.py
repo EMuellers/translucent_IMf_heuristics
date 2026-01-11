@@ -56,6 +56,12 @@ def get_end_activities_tcl(tcl: TCL) -> Counter[str]:
             ends[variant[-1][0]] += count
     return ends
 
+def get_executed_activity_frequencies_tcl(tcl: TCL) -> Counter[str]:
+    activity_frequencies = Counter()
+    for variant, count in tcl.items():
+        for event in variant:
+            activity_frequencies[event[0]] += count
+    return activity_frequencies
 
 if __name__ == "__main__":
     # Testing some functionality
