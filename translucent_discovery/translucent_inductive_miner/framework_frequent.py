@@ -242,7 +242,6 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
         }
         
         # apply filtering to end activities only if translucent
-        #TODO: Ask Harry if this is intended behavior
         if translucent:
             end_max_occ = max(end_activities.values())
             end_activities = {x: y for x, y in end_activities.items()
