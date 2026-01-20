@@ -48,13 +48,14 @@ def compute_precision(aligned_log: list, prefix_automaton: nx.DiGraph, drg: nx.M
 
 def compute_translucent_precision(aligned_log, prefix_enabled_automaton: nx.MultiDiGraph, rg, drg, dfa: nx.MultiDiGraph,
                                   weight_translucent=1):
-    aligned_log = [t["alignment"] for t in aligned_log if t.get("fitness", None) == 1.0]
+    #aligned_log = [t["alignment"] for t in aligned_log if t.get("fitness", None) == 1.0] #TODO: Change this!
+    aligned_log = [t["alignment"] for t in aligned_log]
     fractions = []
     for trace in aligned_log:
         transition_sequence = ""
         node = frozenset({frozenset({0})})
         for event in trace:
-            if event[1][1] is not None:
+            if event[1][1] is not None and event[1][1] != '>>':
                 """
                 executed = prefix_enabled_automaton.nodes[transition_sequence]["enabled_executed_activities"]
                 enabled = prefix_enabled_automaton.nodes[transition_sequence]["enabled_activities"]
@@ -65,7 +66,7 @@ def compute_translucent_precision(aligned_log, prefix_enabled_automaton: nx.Mult
                 transition_sequence += event[0][1]
                 node = get_node_from_transition(drg, node, event[0][1])
                 """
-                log_enabled = prefix_enabled_automaton.nodes[transition_sequence]["enabled_activities"]
+                log_enabled = prefix_enabled_automaton.nodes[transition_sequence]["enabled_activities"] #TODO: Non-Determinism of alignment causes issues -> use the same alignments in both steps!
                 model_enabled = dfa.nodes[node]["enabled_activities"]
                 nominator = log_enabled.intersection(model_enabled)
                 denominator = model_enabled
@@ -92,7 +93,7 @@ def translucent_precision_score(log: Union[pd.DataFrame, EventLog], net: PetriNe
         log = log_converter.apply(log, variant=log_converter.Variants.TO_EVENT_LOG)
     alignments = get_alignments(log, net, initial_marking, final_marking)
     alignment_enabled_prefix_automaton = AlignmentEnabledPrefixAutomaton(log,
-                                                                         net, initial_marking, final_marking).alignment_enabled_prefix_automaton
+                                                                         net, initial_marking, final_marking, alignments).alignment_enabled_prefix_automaton
     r_g = ReachabilityGraph(net, initial_marking, final_marking, 1)
     d = DirectReachabilityGraph(r_g)
     drg = d.direct_reachability_graph

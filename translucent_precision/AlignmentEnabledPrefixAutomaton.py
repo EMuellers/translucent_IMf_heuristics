@@ -13,7 +13,7 @@ def edge_with_activity_exists(graph: nx.MultiDiGraph, source, target, activity):
     return False
 
 
-def construct_automaton(log: EventLog, net, im, fm, enabled_activities_attribute_name="enabled_activities",
+def construct_automaton(log: EventLog, net, im, fm, alignments, enabled_activities_attribute_name="enabled_activities",
                         enabled_activities_seperator=",") -> nx.MultiDiGraph:
     prefix_automaton = nx.MultiDiGraph()
     initial_node = ''
@@ -22,46 +22,61 @@ def construct_automaton(log: EventLog, net, im, fm, enabled_activities_attribute
     # sink node is needed for enabled activities in an event, but not executed
     sink_node = "sink_enabled"
     prefix_automaton.add_node(sink_node)
-    variants = pm4py.statistics.variants.log.get.get_variants(log)
+    """
+    variants = pm4py.statistics.variants.log.get.get_variants(log) #ToDo: Don't we need the translucent variants here?
     variant_log = EventLog(attributes=log.attributes, extensions=log.extensions, classifiers=log.classifiers,
                            omni_present=log.omni_present, properties=log.properties)
     for variant in variants:
         variant_log.append(variants[variant][0])
     parameters = {star.Parameters.PARAM_ALIGNMENT_RESULT_IS_SYNC_PROD_AWARE: True}
-    for i, trace in enumerate(variant_log):
-        alignment_result = alignment.apply(trace, net, im, fm, parameters=parameters)
-        if alignment_result["fitness"] == 1.0:
-            trace_alignment = alignment_result["alignment"]
-            # Remove tau transitions
-            trace_alignment = [el for el in trace_alignment if el[1][1] is not None]
-            # Reset current prefix
-            current_prefix = initial_node
-            # Special treatment for first real prefix
-            first_prefix = current_prefix + trace_alignment[0][0][1]
-            prefix_automaton.add_edge(initial_node, first_prefix, id=trace_alignment[0][0][1],
-                                      activity=trace_alignment[0][1][1])
-
-            for j, event in enumerate(trace):
-                enabled_activities = event[enabled_activities_attribute_name].split(enabled_activities_seperator)
+    """
+    for i, trace in enumerate(log):
+        #alignment_result = alignment.apply(trace, net, im, fm, parameters=parameters)
+        trace_alignment = alignments[i]["alignment"] #(trace, model)
+        # Remove tau transitions Elias: and model skips from the alignment
+        trace_alignment = [el for el in trace_alignment if el[1][1] is not None and el[1][1] != '>>']
+        # Reset current prefix
+        current_prefix = initial_node
+        # Elias: Project the trace onto the model alignment
+        trace = project_trace_on_model_alignment(trace, alignments[i]["alignment"])
+        if len(trace_alignment) == 0: # If the alignment is empty, after removing model skips and taus: continue
+            continue
+        # Special treatment for first real prefix
+        first_prefix = current_prefix + trace_alignment[0][0][1]
+        prefix_automaton.add_edge(initial_node, first_prefix, id=trace_alignment[0][0][1],
+                                    activity=trace_alignment[0][1][1])
+        offset = 0
+        #num_trace_skips = 0
+        #for e in trace_alignment:
+        #    if e[1][0] == '>>':
+        #        num_trace_skips += 1
+        #for j, event in enumerate(trace):
+        for j in range(len(trace_alignment)):
+            #enabled_activities = event[enabled_activities_attribute_name].split(enabled_activities_seperator)
+            if trace_alignment[j][1][0] == '>>':
+                offset += 1
+                enabled_activities = {trace_alignment[j][1][1]}  # Only excecuted activity
+            else:
+                enabled_activities = trace[j-offset][enabled_activities_attribute_name].split(enabled_activities_seperator)
                 enabled_activities = [el.strip() for el in enabled_activities]
                 enabled_activities = set(enabled_activities)
 
-                current_prefix += trace_alignment[j][0][1]
-                # Add a node for the current prefix if it doesn't exist
-                if not prefix_automaton.has_node(current_prefix):
-                    prefix_automaton.add_node(current_prefix)
+            current_prefix += trace_alignment[j][0][1]
+            # Add a node for the current prefix if it doesn't exist
+            if not prefix_automaton.has_node(current_prefix):
+                prefix_automaton.add_node(current_prefix)
 
-                prev_prefix = current_prefix[:-len(trace_alignment[j][0][1])]
-                # Add an edge with 'id' and 'activity' attributes
-                if len(current_prefix) > len(trace_alignment[j][0][1]):
-                    edge_attributes = {'id': trace_alignment[j][0][1], 'activity': trace_alignment[j][1][1]}
-                    #if not edge_with_activity_exists(prefix_automaton, prev_prefix, current_prefix, trace_alignment[j][1][1]):
-                    prefix_automaton.add_edge(prev_prefix, current_prefix, **edge_attributes)
-                used_activity = trace_alignment[j][1][1]
-                enabled_activities.remove(used_activity)
-                for activity in enabled_activities:
-                    edge_attributes = {'activity': activity}
-                    prefix_automaton.add_edge(prev_prefix, sink_node, **edge_attributes)
+            prev_prefix = current_prefix[:-len(trace_alignment[j][0][1])]
+            # Add an edge with 'id' and 'activity' attributes
+            if len(current_prefix) > len(trace_alignment[j][0][1]):
+                edge_attributes = {'id': trace_alignment[j][0][1], 'activity': trace_alignment[j][1][1]}
+                #if not edge_with_activity_exists(prefix_automaton, prev_prefix, current_prefix, trace_alignment[j][1][1]):
+                prefix_automaton.add_edge(prev_prefix, current_prefix, **edge_attributes)
+            used_activity = trace_alignment[j][1][1]
+            enabled_activities.remove(used_activity)
+            for activity in enabled_activities:
+                edge_attributes = {'activity': activity}
+                prefix_automaton.add_edge(prev_prefix, sink_node, **edge_attributes)
     return prefix_automaton
 
 
@@ -108,10 +123,23 @@ def add_enabled_information_to_nodes(graph: nx.MultiDiGraph) -> nx.MultiDiGraph:
     return graph
 
 
-def get_automaton(log: EventLog, net, im, fm) -> nx.MultiDiGraph:
-    return add_enabled_information_to_nodes(remove_wrong_sink_arcs(construct_automaton(log, net, im, fm)))
+def get_automaton(log: EventLog, net, im, fm, alignments) -> nx.MultiDiGraph:
+    return add_enabled_information_to_nodes(remove_wrong_sink_arcs(construct_automaton(log, net, im, fm, alignments)))
+
+def project_trace_on_model_alignment(trace, trace_alignment): #TODO: Check this! Should now be right
+    # Only keeps events that have a matching move in the model alignment
+    i = 0
+    projected_trace = []
+    for step in trace_alignment:
+        if step[1][1] is not None and step[1][1] != '>>' and step[1][0] != '>>':
+            projected_trace.append(trace[i])
+            i += 1
+        else:
+            if step[1][1] == '>>':
+                i += 1
+    return projected_trace
 
 
 class AlignmentEnabledPrefixAutomaton:
-    def __init__(self, log: EventLog, net, im, fm):
-        self.alignment_enabled_prefix_automaton = get_automaton(log, net, im, fm)
+    def __init__(self, log: EventLog, net, im, fm, alignments):
+        self.alignment_enabled_prefix_automaton = get_automaton(log, net, im, fm, alignments)
