@@ -1,0 +1,70 @@
+.TH \fBsyn_sg 1cad
+.SH NAME
+\fBsyn_sg\fR	- synthesis of speed-independent circuits from a state graph or a Signal Transition Graph.
+.SH SYNOPSIS
+\fBsyn_sg\fR [\fIoptions\fR]* [\fIinfile\fR]
+.SH DESCRIPTION
+\fBsyn_sg\fP is a tool that generates the Boolean equations of a speed-independent circuit from a description in the astg format used by \fBpetrify\fP. 
+Alternatively, the tool can also be used to generate the state graph obtained
+after hiding some of the signals in the specification. This tool should only
+be used when the state graph is not large (e.g. not more than 15 signals and 50000 states).
+
+.SH OPTIONS
+.TP 1.2i
+\fB-h\fP
+Help mode, prints the usage.
+.TP
+\fB-v\fP
+Print version only.
+.TP
+\fB-s\fP[\fIn\fP]
+Maximum allowed number of generated states. The default value is 10000.
+This limit affects the number of internally generated states, which is often larger than the number of final states. In case the number is exceed, this limit must be increased. On the other hand, this might also be a symptom that the STG is unbounded (not checked by the tool).
+.TP
+\fB-cg\fP
+Generate equations for complex gates (this is the default option).
+.TP
+\fB-gc\fP
+Generate equations for generalized C-elements (pull-up and pull-down networks).
+.TP
+\fB-sg\fP
+Dump only the state graph resulting after hidding the signals specified in the \fBhide\fP list or not specified in the \fBproj\fP list (see the \fB-hide\fP
+and \fB-proj\fP options).
+.TP
+\fB-hide\fP \fIsignal_list\fP
+The signals in the list are hidden.
+The \fIsignal_list\fP is a list of signals separated by
+commas. Eventually, this list may specify groups of signals using
+the keywords \fI.inputs\fP, \fI.outputs\fP, etc. For example, 
+\fB-hide\fP \fIa,.dummy\fP.
+.TP
+\fB-proj\fP \fIsignal_list\fP
+This options projects the state graph onto the signals in the list.
+Therefore,  all the signals, except those in the list, are hidden.
+The \fIsignal_list\fP is a list of signals separated by
+commas. Eventually, this list may specify groups of signals using
+the keywords \fI.inputs\fP, \fI.outputs\fP, etc. For example, 
+\fB-proj\fP \fIa,.inputs\fP.
+.TP
+\fB-sis\fP
+Write the events in SIS compatible style (toggle events are written
+with the suffix ~).
+.TP
+\fB-o\fP \fIoutfile\fP
+Write the output to \fIoutfile\fP. Otherwise, the result
+is written to \fIstdout\fP.
+
+.SH BUGS
+What are you talking about ?
+.SH AUTHOR
+Jordi Cortadella  
+.br
+Department of Software
+.br
+Universitat Politecnica de Catalunya
+.br
+Barcelona, Spain
+.br
+(jordi.cortadella@upc.edu)
+.SH STATUS
+Use at your own risk. Bug reports are welcomed, as well as success stories.

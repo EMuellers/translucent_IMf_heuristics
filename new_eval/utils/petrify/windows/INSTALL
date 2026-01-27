@@ -1,0 +1,24 @@
+This distribution contains the following files:
+
+ * Binary files in "bin" directory: petrify, draw_astg and write_sg
+ * man pages in "man/man1": petrify.1, draw_astg.1 and write_sg.1
+ * A gate library: lib/petrify.genlib
+ * Documentation in "doc":
+      - A tutorial: tutorial.pdf
+      - PDF version of the man pages
+
+The binaries "draw_astg" and "write_sg" are in fact links to "petrify"
+(they share the same binary code).
+
+You should define properly define the variables PATH and MANPATH
+of your environment including the "bin" and "man" directories
+of petrify respectively.
+
+For technology mapping, you can define your own library or use the
+one provided with the package (see the man page on how to define
+the path to find the library: option -lib).
+
+Note: draw_astg and write_sg require the application "dot" to
+be executable in your PATH. You can find "dot" for several
+platforms in the "graphviz" package at the following location:
+http://www.research.att.com/sw/tools/graphviz/

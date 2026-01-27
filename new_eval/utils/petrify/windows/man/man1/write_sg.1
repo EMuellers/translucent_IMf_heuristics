@@ -1,0 +1,51 @@
+.TH \fBwrite_sg 1cad
+.SH NAME
+\fBwrite_sg\fR	- write a state graph from a Petri net (or a Signal Transition Graph)
+.SH SYNOPSIS
+\fBwrite_sg\fR [\fIoptions\fR]* [\fIinfile\fR]
+.SH DESCRIPTION
+\fBwrite_sg\fP is a tool that writes a state graph from a description is the 
+astg format used by \fBpetrify\fP.
+
+.SH OPTIONS
+.TP 1.2i
+\fB-h\fP
+Help mode, prints the usage.
+.TP
+\fB-v\fP
+Print version only.
+.TP
+\fB-sis\fP
+Write the events in SIS compatible style (toggle events are written
+with the suffix ~).
+.TP
+\fB-huge\fP
+Allow to dump state graphs with more than 100 states.
+.TP
+\fB-bin\fP
+Dump state coding information. Each state name contains a suffix with
+the encoding of the binary signals and information about state encoding
+conflicts. This option can be combined with the option \fB-bin\fP of
+\fIdraw_astg\fP to show binary encoding and CSC conflicts.
+.TP
+\fB-usc\fP
+The states with the same encoding are merged. The resulting state graph is not equivalent, but it is valid for synthesis if the original state graph had the CSC property. This option may help to reduce the size of the state graph significantly.
+.TP
+\fB-o\fP \fIoutfile\fP
+Write the output to \fIoutfile\fP. Otherwise, the result
+is written to \fIstdout\fP.
+
+.SH BUGS
+What are you talking about ?
+.SH AUTHOR
+Jordi Cortadella  
+.br
+Department of Software
+.br
+Universitat Politecnica de Catalunya
+.br
+Barcelona, Spain
+.br
+(jordi.cortadella@upc.edu)
+.SH STATUS
+Use at your own risk. Bug reports are welcomed, as well as success stories.
