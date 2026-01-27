@@ -27,6 +27,15 @@ def parse_petrify_net_to_pm4py(file_path: str) -> tuple[PetriNet, Marking, Marki
                     net.transitions.add(transition)
                     transitions[t_name] = transition
                 continue
+            elif line.lstrip().startswith('.outputs'): # These are the transitions
+                # Remove .inputs and split by spaces
+                inputs = line.lstrip()[8:].strip().split()
+                for t_name in inputs:
+                    transition = PetriNet.Transition(t_name)
+                    transition.label = t_name #TODO: Do we need to set the label here?
+                    net.transitions.add(transition)
+                    transitions[t_name] = transition
+                continue
             elif line.lstrip().startswith('.marking'): # This is the place that contains the initial marking, e.g.: .marking { p4 }
                 # The place is already created at this point
                 p_name = line.lstrip()[8:].strip().replace('{', '').replace('}', '').strip()
