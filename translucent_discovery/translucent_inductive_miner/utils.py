@@ -33,6 +33,8 @@ def get_sorted_delta_arcs(delta_arcs, obj, criterion = "dependency_score"):
             return sorted(_calculate_dependency_scores(delta_arcs, obj), key=lambda x: x[1])
         case "exclusive_choice_frequency":
             return sorted(get_choice_relationships_frequent_tcl(obj.tcl, delta_arcs), key=lambda x: x[1], reverse=True)
+        case "parallel_relationship_frequency":
+            return sorted(get_parallel_relationships_frequent_tcl(obj.tcl, delta_arcs), key=lambda x: x[1], reverse=True) # TODO: Check if sorting is correct!
         case "confidence":
             return sorted(_calculate_confidence_scores(delta_arcs, obj), key=lambda x: x[1])
         case "support":
@@ -148,3 +150,22 @@ def _calculate_support_scores(delta_arcs, obj):
     for arc in delta_arcs:
         score = translucent_dfr[arc]
         yield (arc, score)
+
+def get_parallel_relationships_frequent_tcl(log: TCL, executed_activities) -> dict:
+    activity_parallel = {}
+    for trace in log:
+        number_of_occurrence = log[trace]
+        for index, current_event in enumerate(trace):
+            if index < len(trace)-1:
+                executed_activity = current_event[0]
+                enabled_activities_current = current_event[1].intersection(executed_activities)
+                enabled_activities_next = trace[index+1][1].intersection(executed_activities)
+                still_enabled = enabled_activities_current.intersection(enabled_activities_next)
+                for activity in still_enabled:
+                    if (executed_activity, activity) not in activity_parallel:
+                        activity_parallel[(executed_activity, activity)] = 0
+                    activity_parallel[(executed_activity, activity)] += number_of_occurrence
+                    if (activity, executed_activity) not in activity_parallel:
+                        activity_parallel[(activity, executed_activity)] = 0
+                    activity_parallel[(activity, executed_activity)] += number_of_occurrence
+    return activity_parallel

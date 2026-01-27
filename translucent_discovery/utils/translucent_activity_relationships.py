@@ -57,7 +57,7 @@ def get_end_activities_tcl(log: TCL, executed_activities, strict_end_activities=
     #Change:
     #Elias: Strict end activities only count those that actually appeared at the end of a trace at least once
     if strict_end_activities:
-        at_least_once_end_activities = { log[variant][-1][0] for variant in log }
+        at_least_once_end_activities = { trace[-1][0] for trace in log if trace }
     for trace in log:
         if len(trace) > 0:
             end_activities_current = trace[-1][1]
@@ -156,12 +156,13 @@ def get_parallel_relationships_tcl(log: TCL, executed_activities) -> dict:
                 enabled_activities_next = trace[index+1][1].intersection(executed_activities)
                 still_enabled = enabled_activities_current.intersection(enabled_activities_next)
                 for activity in still_enabled:
-                    if executed_activity not in activity_parallel:
-                        activity_parallel[executed_activity] = set()
-                    activity_parallel[executed_activity].add(activity)
-                    if activity not in activity_parallel:
-                        activity_parallel[activity] = set()
-                    activity_parallel[activity].add(executed_activity)
+                    if activity != executed_activity:
+                        if executed_activity not in activity_parallel:
+                            activity_parallel[executed_activity] = set()
+                        activity_parallel[executed_activity].add(activity)
+                        if activity not in activity_parallel:
+                            activity_parallel[activity] = set()
+                        activity_parallel[activity].add(executed_activity)
     return activity_parallel
 
 
@@ -187,6 +188,7 @@ def get_parallel_relationships_frequent(log, executed_activities, enabled_activi
     return activity_parallel
 
 # get_parallel_relationships_frequent for tcl logs
+#TODO: Harry nach Definition fragen: kann activity in parallel relationship mit sich selbst stehen?
 def get_parallel_relationships_frequent_tcl(log: TCL, executed_activities) -> dict:
     activity_parallel = {}
     for trace in log:
@@ -324,7 +326,8 @@ def get_choice_relationships_frequent_tcl(log: TCL, executed_activities) -> dict
                     activity_choice[(executed_activity, activity)] += number_of_occurrence
                     if (activity, executed_activity) not in activity_choice:
                         activity_choice[(activity, executed_activity)] = 0
-                    activity_choice[(activity, executed_activity)] += number_of_occurrence
+                    if activity != executed_activity: # Avoid counting self-choice relationships twice #TODO: Ask Harry if this is fine
+                        activity_choice[(activity, executed_activity)] += number_of_occurrence
     return activity_choice
 
 

@@ -277,3 +277,20 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                     return cut
         obj._tdfg = original_tdfg
         return cut
+    
+    def apply_arc_addition_heuristics(self, obj: T, parameters: Optional[Dict[str, Any]] = None) -> Optional[Tuple[ProcessTree, List[T]]]:
+        """Applies arc addition heuristics to try to find a cut in the modified DFG. If no cut is found, None is returned."""
+        candidate_arcs = get_delta_arcs(obj.tdfg, obj.dfg)
+        original_dfg = deepcopy(obj.dfg)
+        cut = None
+        if len(candidate_arcs) > 0:
+            sorted_arcs = get_sorted_delta_arcs(candidate_arcs, obj, criterion=parameters["add_arcs_heuristics"])
+            sorted_arcs.reverse() # We want to add the best arcs first, function returns worst to best
+            # Add best arcs one by one and try to find a cut
+            for arc, score in sorted_arcs:
+                obj.dfg.graph.update({arc: obj.tdfg.graph[arc]}) #TODO: Check if this works correctly
+                cut = self.find_cut(obj, parameters)
+                if cut is not None:
+                    return cut
+        obj._dfg = original_dfg
+        return cut
