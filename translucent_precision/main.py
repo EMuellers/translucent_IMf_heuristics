@@ -66,7 +66,7 @@ def compute_translucent_precision(aligned_log, prefix_enabled_automaton: nx.Mult
                 transition_sequence += event[0][1]
                 node = get_node_from_transition(drg, node, event[0][1])
                 """
-                log_enabled = prefix_enabled_automaton.nodes[transition_sequence]["enabled_activities"] #TODO: Non-Determinism of alignment causes issues -> use the same alignments in both steps!
+                log_enabled = prefix_enabled_automaton.nodes[transition_sequence]["enabled_activities"] #Elias: Non-Determinism of alignments causes issues -> use the same alignments in both steps!
                 model_enabled = dfa.nodes[node]["enabled_activities"]
                 nominator = log_enabled.intersection(model_enabled)
                 denominator = model_enabled
