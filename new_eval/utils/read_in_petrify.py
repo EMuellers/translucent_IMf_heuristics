@@ -197,8 +197,9 @@ def parse_petrify_net_to_pm4py(file_path: str) -> tuple[PetriNet, Marking, Marki
     if counter > 1:
         raise Exception("Multiple final places were created.")
     
+     
     remove_label_splitting_for_conformance_checking(net, inputs)
-    add_back_spaces_in_labels(net)
+    add_back_spaces_in_labels(net) #! If activities contain underscores in original log this needs to be changed! Even more headache if both spaces and underscores are used...
     
     # Debug: Display the Petri net
     #pm4py.view_petri_net(net, im, fm)
