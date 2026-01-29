@@ -37,25 +37,29 @@ def discover_net_with_regions_from_rooted_log(log: TCL, log_name= '', parameters
     
     # 2. Create petrify compatible .g file from the automaton
     path = os.getcwd()
-    path = path.split("new_eval")[0] + "new_eval\\utils"
-    rel_path = path + "\\temp_files"
+    print("Current working directory:", path)
+    path = os.path.join(path.split("new_eval")[0], r"new_eval",r"utils")
+    rel_path = os.path.join(path, "temp_files")
     file_path = os.path.join(rel_path, log_name + "_temp.g")
     export_to_petrify(ts, file_path)
     
     # 3. Call petrify to discover the net
     if os.name == 'nt':  # Windows
-        petrify_path = path +"\\petrify\\windows\\bin\\petrify.exe"
+        petrify_path = os.path.join(path, r"petrify",r"windows",r"bin",r"petrify.exe")
+        output_path = path + "\\petrify_nets\\" + log_name + "_net.g"
     else:  # Linux
-        petrify_path = path + "\\petrify\\linux\\bin\\petrify"
+        petrify_path = path + r"/petrify/linux/bin/petrify"
+        output_path = path + r"/petrify_nets/" + log_name + "_net.g"
     
-    output_path = os.path.join(path + "\\petrify_nets", log_name + "_net.g")
     
-    subprocess.run([petrify_path, "-dead","-ip", file_path, "-o", output_path], check=True)  
-    
+    print("Start Petrify, beginning net discovery...")
+    result = subprocess.run([petrify_path, "-dead","-ip", file_path, "-o", output_path], check=True)  
+    print("Petrify finished net discovery.")
     # 4. Read in the petrify output as pm4py Petri net
     net, im, fm = parse_petrify_net_to_pm4py(output_path) 
     
     return net, im, fm
+
 def _discover_automaton(log: TCL):
     """
     Discovers the automaton as described in Definition 5.1 of van der Aalst's paper. Returns a pm4py TransitionSystem object.
@@ -79,7 +83,7 @@ def _discover_automaton(log: TCL):
     for variant in log.keys():
         for i in range(len(variant)):
             current_event = variant[i]
-            current_activity = current_event[0]
+            current_activity = current_event[0].replace(" ", "_")  # Petrify does not allow spaces in event names
             current_enabled_activities = current_event[1]
             current_state = existing_states[current_enabled_activities]
             if i < len(variant) - 1:
