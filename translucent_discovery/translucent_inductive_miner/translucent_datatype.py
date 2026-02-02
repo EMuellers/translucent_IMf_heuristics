@@ -63,6 +63,17 @@ def get_executed_activity_frequencies_tcl(tcl: TCL) -> Counter[str]:
             activity_frequencies[event[0]] += count
     return activity_frequencies
 
+def get_translucent_self_loops(tcl: TCL) -> set[str]:
+    excecuted_activities = get_executed_activities(tcl)
+    loop_dict = {activity: 0 for activity in excecuted_activities}
+    for variant, count in tcl.items():
+        for i in range(len(variant) - 1):
+            current_event = variant[i]
+            next_event = variant[i + 1]
+            if current_event[0] != next_event[0] and current_event[0] in next_event[1]: # count only translucent self-loops (enabled in next event but not executed)
+                loop_dict[current_event[0]] += count
+    return loop_dict
+
 if __name__ == "__main__":
     # Testing some functionality
     import pandas as pd
