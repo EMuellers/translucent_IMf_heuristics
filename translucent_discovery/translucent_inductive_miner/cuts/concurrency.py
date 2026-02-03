@@ -87,7 +87,7 @@ class ConcurrencyCutTranslucent(ConcurrencyCut[IMDataStructureTranslucent]):
                 # Fixed pm4py bug
                 c[tuple(filter(lambda e: e in g, t))] += obj.data_structure[t]
             r.append(c)
-        return list(map(lambda l: IMDataStructureTranslucent(l, Counter(), frequent=obj.frequent, parameters=parameters, self_loop_info=obj.__translucent_self_loops), r))
+        return list(map(lambda l: IMDataStructureTranslucent(l, Counter(), frequent=obj.frequent, parameters=parameters, self_loop_info=obj._translucent_self_loops), r))
 
 
 
@@ -102,4 +102,4 @@ class ConcurrencyCutTranslucentTCL(ConcurrencyCut[IMDataStructureTranslucent]):
                 # Fixed pm4py bug
                 c[tuple(filter(lambda e: e[0] in g, t))] += obj.tcl[t] # filter should work
             r.append(c)
-        return list(map(lambda l: IMDataStructureTranslucent(None, l, frequent=obj.frequent, parameters=parameters, self_loop_info=obj.__translucent_self_loops), r))
+        return list(map(lambda l: IMDataStructureTranslucent(None, l, frequent=obj.frequent, parameters=parameters, self_loop_info=obj._translucent_self_loops), r))

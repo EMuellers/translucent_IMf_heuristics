@@ -21,8 +21,9 @@ class IMDataStructureTranslucent(IMDataStructureLog[UVCL]):
         if obj is None:
             obj = tcl_to_uvcl(tcl)
         super().__init__(obj)
+        self._translucent_self_loops = self_loop_info
         if parameters.get("translucent_self_loops", False) and self_loop_info is None:
-            self.__translucent_self_loops = get_translucent_self_loops(tcl)
+            self._translucent_self_loops = get_translucent_self_loops(tcl)
         if dfg is None:
             self._dfg = comut.discover_dfg_uvcl(self._obj)
         else:
@@ -32,10 +33,10 @@ class IMDataStructureTranslucent(IMDataStructureLog[UVCL]):
         #pm4py.view_dfg(self._dfg.graph, self._dfg.start_activities, self._dfg.end_activities)
         self._frequent = frequent
         if not frequent:
-            self._tdfg = discover_dfg_tcl(tcl, parameters=parameters, self_loops=self.__translucent_self_loops)
+            self._tdfg = discover_dfg_tcl(tcl, parameters=parameters, self_loops=self.translucent_self_loops)
         else:
             if tdfg is None:
-                self._tdfg = discover_frequent_dfg_tcl(tcl, parameters=parameters, self_loops=self.__translucent_self_loops)
+                self._tdfg = discover_frequent_dfg_tcl(tcl, parameters=parameters, self_loops=self.translucent_self_loops)
             else:
                 self._tdfg = tdfg
         #Elias: #debug: display tdfg
@@ -59,4 +60,4 @@ class IMDataStructureTranslucent(IMDataStructureLog[UVCL]):
 
     @property
     def translucent_self_loops(self):
-        return self.__translucent_self_loops
+        return self._translucent_self_loops

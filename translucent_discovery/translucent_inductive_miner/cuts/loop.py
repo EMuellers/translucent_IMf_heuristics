@@ -266,7 +266,7 @@ class LoopCutTranslucentTCL(LoopCut[IMDataStructureTranslucent]):
             do_log.update({do_trace: card})  # keep empty do slices, consistent with original
 
         logs = [do_log] + redo_logs
-        return [IMDataStructureTranslucent(None, l, frequent=obj.frequent, parameters=parameters, self_loop_info=obj.__translucent_self_loops) for l in logs]
+        return [IMDataStructureTranslucent(None, l, frequent=obj.frequent, parameters=parameters, self_loop_info=obj._translucent_self_loops) for l in logs]
 
     @classmethod
     def _append_trace_to_redo_log(

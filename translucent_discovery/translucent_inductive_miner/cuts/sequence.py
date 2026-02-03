@@ -164,7 +164,7 @@ class SequenceCutTranslucent(SequenceCut[IMDataStructureTranslucent]):
                 split_point = new_split_point
                 act_union = act_union.union(set(groups[i]))
                 i = i + 1
-        return list(map(lambda l: IMDataStructureTranslucent(l, Counter(), frequent=obj.frequent, parameters=parameters, self_loop_info=obj.__translucent_self_loops), logs))
+        return list(map(lambda l: IMDataStructureTranslucent(l, Counter(), frequent=obj.frequent, parameters=parameters, self_loop_info=obj._translucent_self_loops), logs))
 
     @classmethod
     def _find_split_point(cls, t: Tuple[Any], group: Collection[Any], start: int, ignore: Collection[Any], parameters: Optional[Dict[str, Any]] = None) -> int:
@@ -217,7 +217,7 @@ class SequenceCutTranslucentTCL(SequenceCut[IMDataStructureTranslucent]):
                 split_point = new_split_point
                 act_union = act_union.union(set(groups[i]))
                 i = i + 1
-        return list(map(lambda l: IMDataStructureTranslucent(None, l, frequent=obj.frequent, parameters=parameters, self_loop_info=obj.__translucent_self_loops), logs))
+        return list(map(lambda l: IMDataStructureTranslucent(None, l, frequent=obj.frequent, parameters=parameters, self_loop_info=obj.translucent_self_loops), logs))
 
     @classmethod
     def _find_split_point(cls, t: Tuple[Any], group: Collection[Any], start: int, ignore: Collection[Any], parameters: Optional[Dict[str, Any]] = None) -> int:

@@ -76,7 +76,7 @@ class ExclusiveChoiceCutTranslucent(ExclusiveChoiceCut[IMDataStructureTranslucen
                 if e in groups[count[0][0]]:
                     new_trace = new_trace + (e,)
             logs[count[0][0]].update({new_trace: obj.data_structure[t]})
-        return list(map(lambda l: IMDataStructureTranslucent(l, Counter(), frequent=obj.frequent, parameters=parameters, self_loop_info=obj.__translucent_self_loops), logs))
+        return list(map(lambda l: IMDataStructureTranslucent(l, Counter(), frequent=obj.frequent, parameters=parameters, self_loop_info=obj._translucent_self_loops), logs))
 
 
 class ExclusiveChoiceCutTranslucentTCL(ExclusiveChoiceCut[IMDataStructureTranslucent]):
@@ -95,4 +95,4 @@ class ExclusiveChoiceCutTranslucentTCL(ExclusiveChoiceCut[IMDataStructureTranslu
                 if e[0] in groups[count[0][0]]:
                     new_trace = new_trace + (e,)
             logs[count[0][0]].update({new_trace: obj.tcl[t]})
-        return list(map(lambda l: IMDataStructureTranslucent(None, l, frequent=obj.frequent, parameters=parameters, self_loop_info=obj.__translucent_self_loops), logs))
+        return list(map(lambda l: IMDataStructureTranslucent(None, l, frequent=obj.frequent, parameters=parameters, self_loop_info=obj._translucent_self_loops), logs))

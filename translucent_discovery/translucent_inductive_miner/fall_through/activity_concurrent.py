@@ -183,4 +183,4 @@ class ActivityConcurrentTranslucentTCL(FallThrough[IMDataStructureTranslucent]):
         for t in log:
             l_a.update({tuple(filter(lambda e: e[0] == candidate, t)): log[t]})
             l_other.update({tuple(filter(lambda e: e[0] != candidate, t)): log[t]})
-        return ProcessTree(operator=Operator.PARALLEL), [IMDataStructureTranslucent(None, l_a, frequent=obj.frequent, parameters=parameters, self_loop_info=obj.__translucent_self_loops), IMDataStructureTranslucent(None, l_other, frequent=obj.frequent, parameters=parameters, self_loop_info=obj.__translucent_self_loops)]
+        return ProcessTree(operator=Operator.PARALLEL), [IMDataStructureTranslucent(None, l_a, frequent=obj.frequent, parameters=parameters, self_loop_info=obj._translucent_self_loops), IMDataStructureTranslucent(None, l_other, frequent=obj.frequent, parameters=parameters, self_loop_info=obj._translucent_self_loops)]
