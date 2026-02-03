@@ -186,6 +186,7 @@ def discover_frequent_dfg_tcl(log: TCL, subtract_xor=True, parameters={}, self_l
     """
     return dfg
 
+#TODO: Decide with Harry whether to use this or the other approach (see notes)
 def check_translucent_self_loop_with_filtering(log: TCL, activity: str, frequency_threshold: int, translucent_self_loop_frequency: int) -> bool:
     """
     Checks whether self-loops in the given log plus translucent self-loops from the initial log are above the frequency threshold * end activity frequency.
