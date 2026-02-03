@@ -11,16 +11,18 @@ from pm4py.objects.dfg.obj import DFG
 from pm4py.util.compression import util as comut
 from pm4py.util.compression.dtypes import UVCL
 from translucent_discovery.translucent_inductive_miner.utils import get_translucent_trace_variants
-from translucent_discovery.translucent_inductive_miner.translucent_datatype import TCL, tcl_to_uvcl
+from translucent_discovery.translucent_inductive_miner.translucent_datatype import TCL, tcl_to_uvcl, get_translucent_self_loops
 import pm4py
 
 
 #Elias: pm4py Äquivalent: IMDataStructureUVCL in algo/discovery/inductive/dtypes/im_ds.py
 class IMDataStructureTranslucent(IMDataStructureLog[UVCL]):
-    def __init__(self, obj: UVCL, tcl: TCL, dfg: Optional[DFG] = None, frequent=False, tdfg = None, parameters = {}):
+    def __init__(self, obj: UVCL, tcl: TCL, dfg: Optional[DFG] = None, frequent=False, tdfg = None, parameters = {}, self_loop_info = None):
         if obj is None:
             obj = tcl_to_uvcl(tcl)
         super().__init__(obj)
+        if parameters.get("translucent_self_loops", False) and self_loop_info is None:
+            self.__translucent_self_loops = get_translucent_self_loops(tcl)
         if dfg is None:
             self._dfg = comut.discover_dfg_uvcl(self._obj)
         else:
@@ -30,10 +32,10 @@ class IMDataStructureTranslucent(IMDataStructureLog[UVCL]):
         #pm4py.view_dfg(self._dfg.graph, self._dfg.start_activities, self._dfg.end_activities)
         self._frequent = frequent
         if not frequent:
-            self._tdfg = discover_dfg_tcl(tcl, parameters=parameters)
+            self._tdfg = discover_dfg_tcl(tcl, parameters=parameters, self_loops=self.__translucent_self_loops)
         else:
             if tdfg is None:
-                self._tdfg = discover_frequent_dfg_tcl(tcl, parameters=parameters)
+                self._tdfg = discover_frequent_dfg_tcl(tcl, parameters=parameters, self_loops=self.__translucent_self_loops)
             else:
                 self._tdfg = tdfg
         #Elias: #debug: display tdfg
@@ -55,3 +57,6 @@ class IMDataStructureTranslucent(IMDataStructureLog[UVCL]):
     def tcl(self):
         return self._tcl
 
+    @property
+    def translucent_self_loops(self):
+        return self.__translucent_self_loops
