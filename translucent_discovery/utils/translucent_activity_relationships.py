@@ -188,7 +188,6 @@ def get_parallel_relationships_frequent(log, executed_activities, enabled_activi
     return activity_parallel
 
 # get_parallel_relationships_frequent for tcl logs
-#TODO: Harry nach Definition fragen: kann activity in parallel relationship mit sich selbst stehen?
 def get_parallel_relationships_frequent_tcl(log: TCL, executed_activities) -> dict:
     activity_parallel = {}
     for trace in log:
@@ -200,12 +199,13 @@ def get_parallel_relationships_frequent_tcl(log: TCL, executed_activities) -> di
                 enabled_activities_next = trace[index+1][1].intersection(executed_activities)
                 still_enabled = enabled_activities_current.intersection(enabled_activities_next)
                 for activity in still_enabled:
-                    if (executed_activity, activity) not in activity_parallel:
-                        activity_parallel[(executed_activity, activity)] = 0
-                    activity_parallel[(executed_activity, activity)] += number_of_occurrence
-                    if (activity, executed_activity) not in activity_parallel:
-                        activity_parallel[(activity, executed_activity)] = 0
-                    activity_parallel[(activity, executed_activity)] += number_of_occurrence
+                    if activity != executed_activity:
+                        if (executed_activity, activity) not in activity_parallel:
+                            activity_parallel[(executed_activity, activity)] = 0
+                        activity_parallel[(executed_activity, activity)] += number_of_occurrence
+                        if (activity, executed_activity) not in activity_parallel:
+                            activity_parallel[(activity, executed_activity)] = 0
+                        activity_parallel[(activity, executed_activity)] += number_of_occurrence
     return activity_parallel
 
 
