@@ -53,7 +53,7 @@ class StrictTauLoopTranslucent(FallThrough[IMDataStructureTranslucent]):
         if sum(proj.values()) > sum(log.values()):
             return ProcessTree(operator=Operator.LOOP), [IMDataStructureTranslucent(proj, obj.log, frequent=obj.frequent), IMDataStructureTranslucent(Counter(), obj.log, frequent=obj.frequent)]
 
-#TODO: Implement TCL Version
+
 class StrictTauLoopTranslucentTCL(FallThrough[IMDataStructureTranslucent]):
 
     @classmethod
@@ -80,4 +80,4 @@ class StrictTauLoopTranslucentTCL(FallThrough[IMDataStructureTranslucent]):
         log = obj.tcl
         proj = cls._get_projected_log(log)
         if sum(proj.values()) > sum(log.values()):
-            return ProcessTree(operator=Operator.LOOP), [IMDataStructureTranslucent(None, proj, frequent=obj.frequent, parameters=parameters), IMDataStructureTranslucent(None, Counter(), frequent=obj.frequent, parameters=parameters)]
+            return ProcessTree(operator=Operator.LOOP), [IMDataStructureTranslucent(None, proj, frequent=obj.frequent, parameters=parameters, self_loop_info=obj.__translucent_self_loops), IMDataStructureTranslucent(None, Counter(), frequent=obj.frequent, parameters=parameters, self_loop_info=obj.__translucent_self_loops)]

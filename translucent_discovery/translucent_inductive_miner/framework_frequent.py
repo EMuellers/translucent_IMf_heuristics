@@ -258,9 +258,9 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
 
         # Fix: Hand over the correct (t)dfg, frequent flag and parameters
         if translucent:
-            return IMDataStructureTranslucent(obj.data_structure, obj.tcl, tdfg = dfg, frequent=obj.frequent, parameters=parameters)
+            return IMDataStructureTranslucent(obj.data_structure, obj.tcl, tdfg = dfg, frequent=obj.frequent, parameters=parameters, self_loop_info = obj.__translucent_self_loops)
         else:
-            return IMDataStructureTranslucent(obj.data_structure, obj.tcl, dfg = dfg, frequent=obj.frequent, parameters=parameters)
+            return IMDataStructureTranslucent(obj.data_structure, obj.tcl, dfg = dfg, frequent=obj.frequent, parameters=parameters, self_loop_info = obj.__translucent_self_loops)
     
     def apply_arc_removal_heuristics(self, obj: T, parameters: Optional[Dict[str, Any]] = None) -> Optional[Tuple[ProcessTree, List[T]]]:
         """Applies arc removal heuristics to try to find a cut in the modified tDFG. If no cut is found, None is returned."""

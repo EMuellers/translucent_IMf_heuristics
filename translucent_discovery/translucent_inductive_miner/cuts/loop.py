@@ -203,8 +203,7 @@ class LoopCutTranslucent(LoopCut[IMDataStructureTranslucent]):
         return redo_logs
     
 
-#TODO: Make compatible with TCL
-#TODO: Continue here, use updated pm4py implementation as basis!
+
 class LoopCutTranslucentTCL(LoopCut[IMDataStructureTranslucent]):
 
     @classmethod
@@ -267,7 +266,7 @@ class LoopCutTranslucentTCL(LoopCut[IMDataStructureTranslucent]):
             do_log.update({do_trace: card})  # keep empty do slices, consistent with original
 
         logs = [do_log] + redo_logs
-        return [IMDataStructureTranslucent(None, l, frequent=obj.frequent, parameters=parameters) for l in logs]
+        return [IMDataStructureTranslucent(None, l, frequent=obj.frequent, parameters=parameters, self_loop_info=obj.__translucent_self_loops) for l in logs]
 
     @classmethod
     def _append_trace_to_redo_log(
@@ -293,4 +292,4 @@ class LoopCutTranslucentTCL(LoopCut[IMDataStructureTranslucent]):
         target = overlaps[0][0]
         redo_logs[target].update({redo_trace: cardinality})
         return redo_logs
-        #TODO: Does this work?
+        
