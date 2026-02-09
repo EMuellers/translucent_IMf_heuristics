@@ -35,7 +35,7 @@ def discover_process_tree(log, parameters, noise_threshold):
     else:
         imf = IMF(parameters)
         parameters["noise_threshold"] = noise_threshold
-        temp = IMDataStructureTranslucent(uvcl, tcl, frequent=True, parameters=parameters)
+        temp = IMDataStructureTranslucent(uvcl, tcl, frequent=False, parameters=parameters) # First use normal DFG, therefore frequent=False
         return imf.apply(temp, parameters)
 
 
