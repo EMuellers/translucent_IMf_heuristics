@@ -40,7 +40,7 @@ class Parameters(Enum):
 class CutFactory:
 
     #Elias: Gibt an welche Cuts erlaubt sind und in welcher Reihenfolge sie geprüft werden
-    #! TODO: ADD TCL VERSIONS OF CUTS
+    
     @classmethod
     def get_cuts(cls, obj: T, inst: IMInstance, parameters: Optional[Dict[str, Any]] = None, tcl=True) -> List[S]:
         if parameters is None:
