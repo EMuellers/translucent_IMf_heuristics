@@ -38,7 +38,7 @@ class TauLoopTranslucent(StrictTauLoopTranslucent):
             proj.update({t[x:len(t)]: log[t]})
         return proj
 
-#TODO: Implement TCL Version
+
 class TauLoopTranslucentTCL(StrictTauLoopTranslucentTCL):
 
     @classmethod
