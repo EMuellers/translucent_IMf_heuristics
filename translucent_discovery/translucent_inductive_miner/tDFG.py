@@ -179,6 +179,9 @@ def discover_frequent_dfg_tcl(log: TCL, subtract_xor=True, parameters={}, self_l
                     end_activities.update({source: end_activities[target]})
     for act in end_activities:
         dfg.end_activities.update({act: end_activities[act]})
+    if parameters.get("translucent_self_loops", False) and len(executed_activities) == 1:
+        if self_loops[list(executed_activities)[0]] > 0:
+            dfg.update({(list(executed_activities)[0], list(executed_activities)[0]): 1}) # only one activity executed
     """ #TODO: Decide how to handle this. Probably not needed, as cut for this heuristic will be found in the non filtered tdfg anyways
     if parameters.get("translucent_self_loops", False) and len(executed_activities) == 1:
         if self_loops[list(executed_activities)[0]] > 0:
@@ -187,6 +190,7 @@ def discover_frequent_dfg_tcl(log: TCL, subtract_xor=True, parameters={}, self_l
     return dfg
 
 #TODO: Decide with Harry whether to use this or the other approach (see notes)
+
 def check_translucent_self_loop_with_filtering(log: TCL, activity: str, frequency_threshold: int, translucent_self_loop_frequency: int) -> bool:
     """
     Checks whether self-loops in the given log plus translucent self-loops from the initial log are above the frequency threshold * end activity frequency.
