@@ -190,7 +190,7 @@ class LoopCutTranslucent(LoopCut[IMDataStructureTranslucent]):
             do_log.update({do_trace: obj.data_structure[t]})
         logs = [do_log]
         logs.extend(redo_logs)
-        return list(map(lambda l: IMDataStructureTranslucent(l, Counter(), frequent=obj.frequent, parameters=parameters), logs))
+        return list(map(lambda l: IMDataStructureTranslucent(l, Counter(), frequent=False, parameters=parameters, self_loop_info=obj._translucent_self_loops), logs))
 
     @classmethod
     def _append_trace_to_redo_log(cls, redo_trace: Tuple, redo_logs: List[UVCL], redo_groups: List[Collection[Any]],
@@ -266,7 +266,7 @@ class LoopCutTranslucentTCL(LoopCut[IMDataStructureTranslucent]):
             do_log.update({do_trace: card})  # keep empty do slices, consistent with original
 
         logs = [do_log] + redo_logs
-        return [IMDataStructureTranslucent(None, l, frequent=obj.frequent, parameters=parameters, self_loop_info=obj._translucent_self_loops) for l in logs]
+        return [IMDataStructureTranslucent(None, l, frequent=False, parameters=parameters, self_loop_info=obj._translucent_self_loops) for l in logs]
 
     @classmethod
     def _append_trace_to_redo_log(
