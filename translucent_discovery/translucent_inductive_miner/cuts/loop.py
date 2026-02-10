@@ -45,7 +45,10 @@ class LoopCut(Cut[T], ABC, Generic[T]):
 
         If no non-empty redo part remains, returns None.
         """
-        dfg = obj.dfg
+        if parameters["tDFG"]:
+            dfg = obj.tdfg
+        else:
+            dfg = obj.dfg
         start_activities = set(dfg.start_activities.keys())
         end_activities = set(dfg.end_activities.keys())
         if len(dfg.graph) == 0:
