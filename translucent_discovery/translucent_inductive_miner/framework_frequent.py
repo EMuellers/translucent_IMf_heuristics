@@ -176,7 +176,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                                             parameters["tDFG"] = False
                                         ft = self.fall_through(obj, parameters)
                                         tree = self._recurse(ft[0], ft[1], parameters=parameters)
-            elif parameters["translucent_variant"] == "IMts":
+            elif parameters["translucent_variant"] == "IMts": #TODO: Fix this
                 parameters["tDFG"] = False
                 cut = self.find_cut(obj, parameters)
                 if cut is not None:
@@ -357,7 +357,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
             }
         """
         # Return datastructure with filtered DFG and tDFG
-        return IMDataStructureTranslucent(obj.data_structure, obj.tcl, dfg = dfg, tdfg = tdfg, frequent=True, parameters=parameters, self_loop_info = obj._translucent_self_loops)
+        return IMDataStructureTranslucent(obj.data_structure, obj.tcl, dfg = dfg, tdfg = tdfg, frequent=True, parameters=parameters, self_loop_info = obj._translucent_self_loops) # Frequent set to true so that handed tdfg is kept
         
         
     def apply_arc_removal_heuristics(self, obj: T, parameters: Optional[Dict[str, Any]] = None) -> Optional[Tuple[ProcessTree, List[T]]]:
