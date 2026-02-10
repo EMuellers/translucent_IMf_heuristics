@@ -162,7 +162,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                                 filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, translucent=True, parameters=parameters)
                                 tree = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True)
                                 if tree is None:
-                                    # Get the filtered dfg (we can do this here as the IMf performs fallthroughs on the filtered DFG anyways, so this is more correct!)
+                                    # Get the filtered dfg 
                                     filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, translucent=False, parameters=parameters)
                                     obj._dfg = filtered_ds.dfg # Update the dfg to the filtered one for the fallthrough
                                     if parameters.get("remove_arcs_heuristics", False) and parameters["delta_heuristic_frequent_after"]: # Apply Arc Removal Heuristics after filtering
@@ -177,36 +177,50 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                                         ft = self.fall_through(obj, parameters)
                                         tree = self._recurse(ft[0], ft[1], parameters=parameters)
             elif parameters["translucent_variant"] == "IMts": #TODO: Fix this
-                parameters["tDFG"] = False
-                cut = self.find_cut(obj, parameters)
+                if not second_iteration_translucent:
+                    parameters["tDFG"] = False
+                cut = self.find_cut(obj, parameters) # performed on normal DFG, filtered DFG and filtered tDFG
                 if cut is not None:
                     tree = self._recurse(cut[0], cut[1], parameters=parameters)
                 if tree is None:
                     if not second_iteration_normal:
-                        filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, False, parameters=parameters)
-                        tree = self.apply(filtered_ds, parameters=parameters, second_iteration_normal=True)
-                    if second_iteration_normal:
-                        parameters["tDFG"] = True
-                        cut = self.find_cut(obj, parameters)
-                        if cut is not None:
-                            parameters["tDFG"] = False
-                            tree = self._recurse(cut[0], cut[1], parameters=parameters)
-                        elif parameters.get("remove_arcs_heuristics", False) and parameters["delta_heuristic_frequent_before"]: # Apply Arc Removal Heuristics before filtering
-                            cut = self.apply_arc_removal_heuristics(obj, parameters)
-                            if cut is not None:
-                                tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                        if parameters.get("add_arcs_heuristics", False): # Arc addition heuristic before filtering
+                                        cut = self.apply_arc_addition_heuristics(obj, parameters)
+                                        if cut is not None:
+                                            tree = self._recurse(cut[0], cut[1], parameters=parameters)
                         if tree is None:
+                            filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, False, parameters=parameters)
+                            tree = self.apply(filtered_ds, parameters=parameters, second_iteration_normal=True)
+                    if second_iteration_normal:
+                        if parameters.get("add_arcs_heuristics", False) and not second_iteration_translucent: # Arc addition heuristic after filtering
+                                        cut = self.apply_arc_addition_heuristics(obj, parameters)
+                                        if cut is not None:
+                                            tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                        if tree is None:
+                            parameters["tDFG"] = True
+                            # We need to get the unfiltered DFG and tDFG back
                             if not second_iteration_translucent:
-                                filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, True, parameters=parameters)
-                                tree = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True,
-                                                  second_iteration_normal=True)
-                                if tree is None:
-                                    if parameters["tDFG_fall_through"]:
-                                        parameters["tDFG"] = True
-                                    else:
-                                        parameters["tDFG"] = False
-                                    ft = self.fall_through(obj, parameters)
-                                    tree = self._recurse(ft[0], ft[1], parameters=parameters)
+                                obj = IMDataStructureTranslucent(obj.data_structure, obj.tcl, parameters=parameters, self_loop_info = obj._translucent_self_loops)
+                                cut = self.find_cut(obj, parameters)
+                            if cut is not None:
+                                parameters["tDFG"] = False
+                                tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                            elif parameters.get("remove_arcs_heuristics", False): # Apply Arc Removal Heuristics before filtering, also called after filtering
+                                cut = self.apply_arc_removal_heuristics(obj, parameters)
+                                if cut is not None:
+                                    tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                            if tree is None:
+                                if not second_iteration_translucent:
+                                    filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, True, parameters=parameters)
+                                    tree = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True,
+                                                    second_iteration_normal=True)
+                                    if tree is None:
+                                        if parameters["tDFG_fall_through"]:
+                                            parameters["tDFG"] = True
+                                        else:
+                                            parameters["tDFG"] = False
+                                        ft = self.fall_through(obj, parameters)
+                                        tree = self._recurse(ft[0], ft[1], parameters=parameters)
             else:
                 print("Variant not set!!!")
         return tree
