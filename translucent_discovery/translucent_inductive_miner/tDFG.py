@@ -80,7 +80,7 @@ def discover_dfg_tcl(log: TCL, parameters={}, self_loops=None) -> DFG:
         dfg.end_activities.update({act: 1})
     if parameters.get("translucent_self_loops", False) and len(executed_activities) == 1:
         if self_loops[list(executed_activities)[0]] > 0:
-            dfg.update({(list(executed_activities)[0], list(executed_activities)[0]): 1}) # only one activity executed and non-frequent dfg
+            dfg.graph.update({(list(executed_activities)[0], list(executed_activities)[0]): 1}) # only one activity executed and non-frequent dfg
     return dfg
 
 #entspricht comut.discover_dfg_uvcl in pm4py
@@ -181,7 +181,7 @@ def discover_frequent_dfg_tcl(log: TCL, subtract_xor=True, parameters={}, self_l
         dfg.end_activities.update({act: end_activities[act]})
     if parameters.get("translucent_self_loops", False) and len(executed_activities) == 1:
         if self_loops[list(executed_activities)[0]] > 0:
-            dfg.update({(list(executed_activities)[0], list(executed_activities)[0]): 1}) # only one activity executed
+            dfg.graph.update({(list(executed_activities)[0], list(executed_activities)[0]): 1}) # only one activity executed
     """ #TODO: Decide how to handle this. Probably not needed, as cut for this heuristic will be found in the non filtered tdfg anyways
     if parameters.get("translucent_self_loops", False) and len(executed_activities) == 1:
         if self_loops[list(executed_activities)[0]] > 0:

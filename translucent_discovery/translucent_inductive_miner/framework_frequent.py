@@ -176,7 +176,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                                             parameters["tDFG"] = False
                                         ft = self.fall_through(obj, parameters)
                                         tree = self._recurse(ft[0], ft[1], parameters=parameters)
-            elif parameters["translucent_variant"] == "IMts": #TODO: Fix this
+            elif parameters["translucent_variant"] == "IMts": #TODO: Check both IMts and IMtf plus check notepad
                 if not second_iteration_translucent:
                     parameters["tDFG"] = False
                 cut = self.find_cut(obj, parameters) # performed on normal DFG, filtered DFG and filtered tDFG
@@ -327,13 +327,12 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
         # Create filtered tDFG
         # First discover plain tfdfg
         tfdfg = discover_frequent_dfg_tcl(obj.tcl, parameters=parameters, self_loops=obj._translucent_self_loops)
-        
         #now apply filtering threshold to tfdfg
         start_activities_tdfg = copy(tfdfg.start_activities)
         end_activities_tdfg = copy(tfdfg.end_activities)
         tdfg = copy(tfdfg.graph)
         outgoing_max_occ_tdfg = {}
-        for x, y in tfdfg.items():
+        for x, y in tdfg.items():
             act = x[0]
             if act not in outgoing_max_occ_tdfg:
                 outgoing_max_occ_tdfg[act] = y
