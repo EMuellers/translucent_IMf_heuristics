@@ -140,7 +140,7 @@ def _calculate_confidence_scores(delta_arcs, obj):
     delta_activities = {act for arc in delta_arcs for act in arc}
     translucent_dfr = get_directly_follow_relationships_frequent_tcl(obj.tcl, delta_activities)
     for arc in delta_arcs:
-        score = translucent_dfr[arc] / activity_frequencies[arc[0]]
+        score = translucent_dfr.get(arc, 0) / activity_frequencies[arc[0]]
         yield (arc, score)
 
 def _calculate_support_scores(delta_arcs, obj):
