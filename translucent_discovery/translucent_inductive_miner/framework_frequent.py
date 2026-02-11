@@ -79,7 +79,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
             if parameters["translucent_variant"] == "IMtf":
                 if not second_iteration_normal:
                     parameters["tDFG"] = True
-                cut = self.find_cut(obj, parameters=parameters) # called for filtered DFG and unfiltered tDFG
+                cut = self.find_cut(obj, parameters=parameters) # called for filtered DFG and unfiltered tDFG and filtered tDFG
                 if cut is not None:
                     tree = self._recurse(cut[0], cut[1], parameters=parameters)
                 if tree is None:
@@ -124,7 +124,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                                             ft = self.fall_through(obj, parameters)
                                             tree = self._recurse(ft[0], ft[1], parameters=parameters)
                                 if second_iteration_normal: # no cut found on filtered DFG, try heuristic
-                                    # Apply arc addition heuristics on filtered DFG and filtered tDFG
+                                    # Apply arc addition heuristics on filtered DFG
                                     if parameters.get("add_arcs_heuristics", False):
                                         cut = self.apply_arc_addition_heuristics(obj, parameters)
                                         if cut is not None:
