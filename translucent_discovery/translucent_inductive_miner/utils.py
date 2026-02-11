@@ -148,7 +148,7 @@ def _calculate_support_scores(delta_arcs, obj):
     delta_activities = {act for arc in delta_arcs for act in arc}
     translucent_dfr = get_directly_follow_relationships_frequent_tcl(obj.tcl, delta_activities)
     for arc in delta_arcs:
-        score = translucent_dfr[arc]
+        score = translucent_dfr.get(arc, 0) # Some arcs in the tdfg only exist because of parallel relationship, so they might not have a translucent directly follows frequency. Using get here avoids this issue
         yield (arc, score)
 
 def get_parallel_relationships_frequent_tcl(log: TCL, executed_activities) -> dict:
