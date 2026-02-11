@@ -41,7 +41,6 @@ class Parameters(Enum):
 
 
 class FallThroughFactory:
-    #TODO: Add TCL VERSIONS!
     @classmethod
     def get_fall_throughs(cls, obj: T, inst: IMInstance, parameters: Optional[Dict[str, Any]] = None) -> List[S]:
         if parameters is None:
