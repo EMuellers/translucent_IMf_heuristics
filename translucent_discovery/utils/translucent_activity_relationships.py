@@ -268,7 +268,7 @@ def get_end_activities_frequent_tcl(log: TCL, executed_activities, strict_end_ac
     #Change:
     #Elias: Strict end activities only count those that actually appeared at the end of a trace at least once
     if strict_end_activities:
-        at_least_once_end_activities = { log[variant][-1][0] for variant in log }
+        at_least_once_end_activities = { variant[-1][0] for variant in log }
     for trace in log:
         number_of_occurrence = log[trace]
         if len(trace) > 0:
