@@ -81,6 +81,10 @@ def discover_dfg_tcl(log: TCL, parameters={}, self_loops=None) -> DFG:
     if parameters.get("translucent_self_loops", False) and len(executed_activities) == 1:
         if self_loops[list(executed_activities)[0]] > 0:
             dfg.graph.update({(list(executed_activities)[0], list(executed_activities)[0]): 1}) # only one activity executed and non-frequent dfg
+            # Add a new variant to the log so that base case is not triggered
+            event_to_append = (list(executed_activities)[0], frozenset(list(executed_activities)[0])) # only one activity executed, so no enabled activities
+            variant_to_append = (event_to_append, event_to_append)
+            log.update({variant_to_append: 1})
     return dfg
 
 #entspricht comut.discover_dfg_uvcl in pm4py
