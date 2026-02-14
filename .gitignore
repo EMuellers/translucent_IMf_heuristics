@@ -165,12 +165,6 @@ logs/
 
 .csv
 
-.g
-
-.apt
-
-.xes
-
 .pdf
 requirements.txt
 evaluation/artificial/artificial_log_result_5.pdf
@@ -910,4 +904,5 @@ translucent_fitness/evaluate/synthetic/abcdefgh.pnml
 translucent_fitness/evaluate/synthetic/evaluate.py
 translucent_fitness/evaluate/synthetic/measured_times_bigger.pdf
 translucent_fitness/evaluate/synthetic/measured_times.pdf
+new_eval/utils/temp_files
 new_eval/utils/petrify_nets
