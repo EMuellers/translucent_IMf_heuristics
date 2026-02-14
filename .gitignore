@@ -165,6 +165,12 @@ logs/
 
 .csv
 
+.g
+
+.apt
+
+.xes
+
 .pdf
 requirements.txt
 evaluation/artificial/artificial_log_result_5.pdf
@@ -878,20 +884,16 @@ translucent_fitness/data/petri_net.pnml
 translucent_fitness/data/running_example.pnml
 translucent_fitness/evaluate/qualitative/ground_truth.csv
 translucent_fitness/evaluate/qualitative/main.py
-translucent_fitness/evaluate/quantitative/change_log.py
 translucent_fitness/evaluate/quantitative/final_log.csv
 translucent_fitness/evaluate/quantitative/ground_truth.csv
 translucent_fitness/evaluate/quantitative/log_after_changing.csv
 translucent_fitness/evaluate/quantitative/log_after_adding.csv
 translucent_fitness/evaluate/quantitative/log_after_removing.csv
 translucent_fitness/evaluate/quantitative/test.py
-translucent_fitness/evaluate/quantitative/adding/add_enabled.py
-translucent_fitness/evaluate/quantitative/adding/add_events.py
 translucent_fitness/evaluate/quantitative/changing/create_logs.py
 translucent_fitness/evaluate/quantitative/hospital_billing/create_logs.py
 translucent_fitness/evaluate/quantitative/hospital_billing/evaluate_script.py
 translucent_fitness/evaluate/quantitative/hospital_billing/original_translucent_event_log_04.csv
-translucent_fitness/evaluate/quantitative/removing/create_logs.py
 translucent_fitness/evaluate/quantitative/road_traffic/evaluate.py
 translucent_fitness/evaluate/quantitative/road_traffic/create_logs.py
 translucent_fitness/evaluate/quantitative/road_traffic/original_translucent_event_log_04.csv
@@ -908,3 +910,4 @@ translucent_fitness/evaluate/synthetic/abcdefgh.pnml
 translucent_fitness/evaluate/synthetic/evaluate.py
 translucent_fitness/evaluate/synthetic/measured_times_bigger.pdf
 translucent_fitness/evaluate/synthetic/measured_times.pdf
+new_eval/utils/petrify_nets
