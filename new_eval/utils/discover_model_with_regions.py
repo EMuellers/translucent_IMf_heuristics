@@ -2,7 +2,7 @@
 Script to discover a process model with the region based method described by van der Aalst using translucent event information.
 """
 
-from new_eval.utils.read_in_petrify import parse_petrify_net_to_pm4py
+from new_eval.utils.read_in_petrify import parse_petrify_net_to_pm4py, load_apt_to_pm4py
 from pm4py.objects.transition_system.obj import TransitionSystem
 from pm4py.visualization.transition_system import visualizer as ts_visualizer
 from pm4py.objects.transition_system.obj import TransitionSystem
@@ -48,15 +48,22 @@ def discover_net_with_regions_from_rooted_log(log: TCL, log_name= '', parameters
         petrify_path = os.path.join(path, r"petrify",r"windows",r"bin",r"petrify.exe")
         output_path = path + "\\petrify_nets\\" + log_name + "_net.g"
     else:  # Linux
+        import resource
         petrify_path = path + r"/petrify/linux/bin/petrify"
         output_path = path + r"/petrify_nets/" + log_name + "_net.g"
     
     
     print("Start Petrify, beginning net discovery...")
-    result = subprocess.run([petrify_path, "-dead","-ip", file_path, "-o", output_path], check=True)  
+    result = subprocess.run([petrify_path, "-dead","-ip", file_path, "-o", output_path], check=True)
+    if os.name != 'nt':  # Linux: Check for memory usage
+        max_memory = resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss # in KB
+        print(f"Petrify max memory usage: {max_memory} KB")  
     print("Petrify finished net discovery.")
     # 4. Read in the petrify output as pm4py Petri net
-    net, im, fm = parse_petrify_net_to_pm4py(output_path) 
+    net, im, fm = parse_petrify_net_to_pm4py(output_path)
+    
+    if os.name != 'nt':
+        return net, im, fm, max_memory 
     
     return net, im, fm
 
@@ -157,15 +164,186 @@ def export_to_petrify(transition_system: TransitionSystem, file_path: str):
         f.write(".end\n")
 
     print(f"Successfully exported to {file_path}")       
+
+
+
+def save_ts_to_apt(ts: TransitionSystem, output_file: str):
+    """
+    Converts a PM4Py Transition System to the official APT .type LTS format.
+    Ref: APT_format.pdf section 6.3.2
+    """
+    
+    # 1. Map complex PM4Py states to simple IDs (s0, s1...)
+    # Sorting ensures deterministic output
+    sorted_states = sorted(list(ts.states), key=lambda s: str(s))
+    state_map = {state: f"s{i}" for i, state in enumerate(sorted_states)}
+    
+    # 2. Identify the Initial State object
+    initial_state_obj = sorted_states[0] # Desperate fallback
+
+    # 3. Collect Labels and Arcs
+    labels = set()
+    arcs_list = []
+    
+    for t in ts.transitions:
+        src_id = state_map[t.from_state]
+        tgt_id = state_map[t.to_state]
+        
+        # Clean label: remove spaces as they break the format
+        label = t.name.replace(" ", "_") if t.name else "tau"
+        
+        labels.add(label)
+        arcs_list.append((src_id, label, tgt_id))
+        
+    # 4. Write to File using strict APT LTS syntax
+    with open(output_file, 'w') as f:
+        # Header [cite: 23, 29]
+        f.write('.name "pm4py_export"\n')
+        f.write('.type LTS\n') 
+        
+        # States Section [cite: 31, 50]
+        f.write('\n.states\n')
+        for state_obj in sorted_states:
+            s_id = state_map[state_obj]
+            if state_obj == initial_state_obj:
+                # The doc requires the initial state to be marked with [initial] [cite: 32, 50]
+                f.write(f'{s_id} [initial]\n')
+            else:
+                f.write(f'{s_id}\n')
+        
+        # Labels Section (instead of .events) 
+        f.write('\n.labels\n')
+        for label in sorted(list(labels)):
+            f.write(f'{label}\n')
+            
+        # Arcs Section (instead of .transitions) 
+        f.write('\n.arcs\n')
+        for src, label, tgt in sorted(arcs_list):
+            f.write(f'{src} {label} {tgt}\n')
+
+    print(f"Exported to {output_file} in APT LTS format.")
+    split_labels_in_apt(output_file, output_file + "_edited")  # Handle non-deterministic transitions by splitting labels
+    #print(f"States: {len(sorted_states)}, Labels: {len(labels)}, Arcs: {len(arcs_list)}")
+
+
+def split_labels_in_apt(input_file, output_file):
+    """
+    Reads an APT file, detects non-deterministic transitions 
+    (same source + same label -> diff target), and splits the labels.
+    """
+    with open(input_file, 'r') as f:
+        lines = f.readlines()
+
+    new_lines = []
+    # Track existing arcs to detect conflicts: { (source, label): target }
+    # If we see (source, label) again with a DIFFERENT target, we split.
+    seen_transitions = {} 
+    
+    # We also need to track all used labels to update the .labels section later
+    all_labels = set()
+    newly_created_labels = set()
+    
+    parsing_arcs = False
+    parsing_labels = False
+    
+    # First pass: Identify all labels currently in the file
+    for line in lines:
+        clean = line.strip()
+        if clean.startswith('.labels'):
+            parsing_labels = True
+            continue
+        if clean.startswith('.'):
+            parsing_labels = False
+        
+        if parsing_labels and clean:
+            all_labels.add(clean)
+
+    # Second pass: Process lines and split arcs
+    for line in lines:
+        clean = line.strip()
+        
+        # Detect sections
+        if clean.startswith('.arcs'):
+            parsing_arcs = True
+            new_lines.append(line)
+            continue
+        if clean.startswith('.') and not clean.startswith('.arcs'):
+            parsing_arcs = False
+            
+        if parsing_arcs and clean:
+            # Parse arc: "s0 label s1"
+            parts = clean.split()
+            if len(parts) == 3:
+                src, label, tgt = parts
+                
+                key = (src, label)
+                
+                if key in seen_transitions:
+                    existing_tgt = seen_transitions[key]
+                    
+                    if existing_tgt != tgt:
+                        # CONFLICT DETECTED!
+                        # Create a new label
+                        base_label = label
+                        counter = 2
+                        new_label = f"{base_label}_{counter}"
+                        
+                        # Ensure we don't collide with existing labels
+                        while new_label in all_labels or new_label in newly_created_labels:
+                            counter += 1
+                            new_label = f"{base_label}_{counter}"
+                        
+                        print(f"Splitting: {src} -> {label} -> {tgt}  ==>  {new_label}")
+                        
+                        newly_created_labels.add(new_label)
+                        # Write the modified line
+                        new_lines.append(f"{src} {new_label} {tgt}\n")
+                        continue
+                
+                # No conflict, or first time seeing this source/label pair
+                seen_transitions[key] = tgt
+                new_lines.append(line)
+            else:
+                new_lines.append(line)
+        
+        # Handle the .labels section update
+        elif clean.startswith('.labels'):
+            new_lines.append(line)
+            # We will append new labels after reading the whole file to be safe, 
+            # or we can insert them here if we buffer. 
+            # Easier strategy: Just write the file, and we inject new labels at the end of the .labels block.
+        else:
+            new_lines.append(line)
+
+    # Re-write the file, injecting the new labels
+    with open(output_file, 'w') as f:
+        in_labels_section = False
+        for line in new_lines:
+            if line.strip().startswith('.labels'):
+                in_labels_section = True
+                f.write(line)
+                continue
+            
+            # If we hit the next section, dump our new labels first
+            if in_labels_section and line.strip().startswith('.'):
+                for nl in newly_created_labels:
+                    f.write(f"{nl}\n")
+                in_labels_section = False
+            
+            f.write(line)
+
     
 if __name__ == "__main__":
     # Testing some functionality
     import pandas as pd
     from pm4py.objects.conversion.log import converter as log_converter
-    df = pd.read_csv(r"C:\Users\elias\Downloads\log_E.csv")
-    log =log_converter.apply(df, variant=log_converter.Variants.TO_EVENT_LOG, parameters={'pm4py:param:case_id_key': "case_id", "activity_key": "activity"})
-    tcl_log = translucent_log_to_tcl(log)
-    net, im, fm = discover_net_with_regions_from_rooted_log(tcl_log, log_name="test_log")
+    
+    #df = pd.read_csv(r"C:\Users\elias\Downloads\log_E.csv")
+    #log =log_converter.apply(df, variant=log_converter.Variants.TO_EVENT_LOG, parameters={'pm4py:param:case_id_key': "case_id", "activity_key": "activity"})
+    #tcl_log = translucent_log_to_tcl(log)
+    #net, im, fm = discover_net_with_regions_from_rooted_log(tcl_log, log_name="test_log")
+    
+    net, im, fm = load_apt_to_pm4py(r"C:\Users\elias\Downloads\test.pnml")
     import pm4py
     pm4py.view_petri_net(net, im, fm)
     
