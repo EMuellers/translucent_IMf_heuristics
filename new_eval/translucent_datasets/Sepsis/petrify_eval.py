@@ -16,6 +16,7 @@ from new_eval.utils.make_rooted import add_artificial_start_and_end_activities_t
 from translucent_precision.main import translucent_precision_score
 from evaluation.translucent_f_1_score import compute_f_1_scores
 from translucent_fitness.fitness import calculate_log_fitness
+from translucent_discovery.translucent_inductive_miner.translucent_datatype import translucent_log_to_tcl
 
 LOG_NAME = "Sepsis"
 
@@ -36,6 +37,8 @@ def evaluate_noise_type(noise_type, base_log):
         
     # Make the log rooted by adding artificial start and end events
     log = add_artificial_start_and_end_activities_translucent(log)
+    
+    log = translucent_log_to_tcl(log)
     
     petrify_results = {}
         
@@ -108,6 +111,8 @@ if __name__ == "__main__":
         # pool.map automatically passes each item in noise_types as the 
         # first argument to 'func', while base_log remains fixed.
         pool.map(func, noise_types)
+    
+    print( LOG_NAME + ": Petrify evaluation completed for all noise types.")
     
     
 
