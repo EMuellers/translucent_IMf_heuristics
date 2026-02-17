@@ -117,12 +117,15 @@ def generate_log_without_noise(path_to_log, noise_threshold, alignment_parameter
         variant_counter[counter] = len(variants[variant])
         counter += 1
     parameters = {star.Parameters.PARAM_ALIGNMENT_RESULT_IS_SYNC_PROD_AWARE: True}
+    print("Start building reachability graph")
     rg = ReachabilityGraph(net, im, fm, 1)
+    print("Start building direct reachability graph and dfa")
     drg = DirectReachabilityGraph(rg).dfa
     global_case_id_counter = 1
     annotated_log = EventLog(attributes=log.attributes, extensions=log.extensions, classifiers=log.classifiers, omni_present=log.omni_present, properties=log.properties)
-    
+    print("Start aligning traces and annotating enabled activities")
     for index, trace in enumerate(variant_log):
+        print(f"Aligning trace and annotating variant {index+1}/{len(variant_log)}")
         node = frozenset({frozenset({0})}) # Indicates position in state space of the model
         alignment_result = alignment.apply(trace, net, im, fm, parameters=parameters) # Format: (Trace / Log, Model)
         # No sorting of alignment, as order can be argued either way. Also we can have totally different optimal alignments.
