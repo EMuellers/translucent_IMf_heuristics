@@ -108,9 +108,6 @@ def generate_log_without_noise(path_to_log, noise_threshold, alignment_parameter
     # Debug: Print the discovered model
     #pm4py.view_petri_net(net, im, fm)
     
-    rg = ReachabilityGraph(net, im, fm, 1)
-    drg = DirectReachabilityGraph(rg).dfa
-    
     variants = pm4py.statistics.variants.log.get.get_variants(log)
     variant_log = EventLog(attributes=log.attributes, extensions=log.extensions, classifiers=log.classifiers, omni_present=log.omni_present, properties=log.properties)
     variant_counter = {}
