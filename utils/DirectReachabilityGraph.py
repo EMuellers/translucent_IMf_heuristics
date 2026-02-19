@@ -3,7 +3,54 @@ from networkx import MultiDiGraph
 from automata.fa.dfa import DFA
 from automata.fa.nfa import NFA
 import copy
+"""
+from pyvis.network import Network
+import numpy as np
 
+def visualize_graph(graph, filename="debug_graph.html"):
+    # Create a fresh, empty graph for the visualization
+    clean_graph = nx.MultiDiGraph()
+    
+    # 1. Sanitize Nodes
+    for node, data in graph.nodes(data=True):
+        # Convert node names to strings if they are arrays or complex objects
+        clean_node = str(node) if isinstance(node, (np.ndarray, list, dict)) else node
+        # Add to clean graph, adding a title for hover-over tooltips
+        clean_graph.add_node(str(clean_node), title=str(data))
+        
+    # 2. Sanitize Edges
+    for u, v, key, data in graph.edges(keys=True, data=True):
+        clean_u = str(u) if isinstance(u, (np.ndarray, list, dict)) else str(u)
+        clean_v = str(v) if isinstance(v, (np.ndarray, list, dict)) else str(v)
+        
+        # Safely extract your custom transition label
+        transition = data.get("transition")
+        if transition is None or transition.label is None:
+            edge_label = "tau"
+        else:
+            edge_label = str(transition.label)
+            
+        weight = data.get("weight", "")
+        display_label = f"{edge_label} (w: {weight})" if weight else edge_label
+
+        # Add the edge with only basic JSON-safe string attributes
+        clean_graph.add_edge(clean_u, clean_v, label=display_label)
+
+    # 3. Render the sanitized graph
+    net = Network(directed=True, notebook=False)
+    # Pyvis layout tweak to handle MultiDiGraph parallel edges better
+    net.set_options("""
+   # var options = {
+    #  "edges": {
+     #   "smooth": {
+      #    "type": "dynamic",
+       #   "forceDirection": "none"
+        #}
+      #}
+    #}
+    #""")
+    #net.from_nx(clean_graph)
+    #net.show(filename, notebook=False)
 
 def find_final_nodes(graph: MultiDiGraph):
     nodes_numbers_of_edges = {}
@@ -28,11 +75,18 @@ def find_final_nodes(graph: MultiDiGraph):
             target_nodes.add(node)
     return target_nodes
 
+# Elias: If a tau loop exists in the original petri net, this will not terminate. As a hack I set a limit to the number of iterations.
+# If it is reached, the remaining tau edges are removed and we pray that no trace is long enough to be affected by this.
+# Of course this is not ideal
+
 
 def remove_tau_add_successor_edges(graph: MultiDiGraph) -> MultiDiGraph:
     still_tau = True
+    no_of_iterations = 0
+    max_iterations = len(graph.nodes) + 1 # Should be a valid upper bound
     edges_to_consider = list(graph.edges)
-    while still_tau:
+    while still_tau and no_of_iterations < max_iterations:
+        no_of_iterations += 1
         still_tau = False
         for edge in edges_to_consider:
             if graph.edges[edge[0], edge[1], edge[2]]["transition"].label is None:
@@ -52,6 +106,11 @@ def remove_tau_add_successor_edges(graph: MultiDiGraph) -> MultiDiGraph:
                     graph.add_edge(source,target, transition=transition, weight=weight)
                 graph.remove_edge(edge[0], edge[1], edge[2])
                 edges_to_consider = list(graph.edges)
+    if no_of_iterations >= max_iterations:
+        print("Warning: Maximum iterations reached while removing tau edges. Remaining tau edges will be removed without adding successor edges.")
+        for edge in list(graph.edges):
+            if graph.edges[edge[0], edge[1], edge[2]]["transition"].label is None:
+                graph.remove_edge(edge[0], edge[1], edge[2])
     return graph
 
 
