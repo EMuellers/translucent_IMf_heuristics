@@ -82,7 +82,7 @@ class TranslucentReachabilityGraph(nx.MultiDiGraph):
             f.truncate()
     """
 
-def tversky_index(set1: set, set2: set, alpha: float = 2, beta: float = 0) -> float:
+def tversky_index(set1: set, set2: set, alpha: float = 1, beta: float = 1) -> float:
     return len(set1.intersection(set2)) / (len(set1.intersection(set2)) + alpha * len(set1.difference(set2)) + beta * len(set2.difference(set1)))
 
 
