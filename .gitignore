@@ -871,7 +871,6 @@ evaluation/hospital_billing/results/DFG_fall/04/00/models/IMts/imts_3.pnml
 evaluation/hospital_billing/results/DFG_fall/04/00/models/IMts/imts_4.pnml
 evaluation/hospital_billing/results/DFG_fall/04/00/models/IMts/imts_5.pnml
 new_eval/original_datasets/
-new_eval/translucent_datasets/Sepsis/
 translucent_fitness/main.py
 translucent_fitness/README.md
 translucent_fitness/data/petri_net.pnml
@@ -906,3 +905,6 @@ translucent_fitness/evaluate/synthetic/measured_times_bigger.pdf
 translucent_fitness/evaluate/synthetic/measured_times.pdf
 new_eval/utils/temp_files/
 new_eval/utils/petrify_nets/
+GEMINI.md
+precision_plot_both.png
+fitness_plot_both.png
