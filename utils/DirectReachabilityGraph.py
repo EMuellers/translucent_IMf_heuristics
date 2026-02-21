@@ -86,6 +86,7 @@ def remove_tau_add_successor_edges(graph: MultiDiGraph) -> MultiDiGraph:
     max_iterations = len(graph.nodes) + 1 # Should be a valid upper bound
     edges_to_consider = list(graph.edges)
     while still_tau and no_of_iterations < max_iterations:
+        print(f"Iteration {no_of_iterations} of maximum {max_iterations} removing tau edges.")
         no_of_iterations += 1
         still_tau = False
         for edge in edges_to_consider:
@@ -113,6 +114,118 @@ def remove_tau_add_successor_edges(graph: MultiDiGraph) -> MultiDiGraph:
                 graph.remove_edge(edge[0], edge[1], edge[2])
     return graph
 
+def remove_tau_add_successor_edges_optimized(graph: MultiDiGraph) -> MultiDiGraph:
+    # 1. Identify tau edges and non-tau edges
+    tau_edges = []
+    non_tau_edges = []
+
+    for u, v, k, data in graph.edges(keys=True, data=True):
+        if data["transition"].label is None:
+            tau_edges.append((u, v))
+        else:
+            non_tau_edges.append((u, v, k, data))
+
+    # 2. Build a graph of only tau transitions for reachability analysis
+    # We use a DiGraph to compute shortest paths (BFS)
+    tau_graph = nx.DiGraph()
+    tau_graph.add_nodes_from(graph.nodes())
+    tau_graph.add_edges_from(tau_edges)
+
+    # 3. Pre-compute observable edges per node for fast lookup
+    observable_out_edges = {}
+    for u, v, k, data in non_tau_edges:
+        if u not in observable_out_edges:
+            observable_out_edges[u] = []
+        observable_out_edges[u].append((v, data))
+
+    edges_to_add = []
+
+    # 4. For each node, find all reachable nodes via tau edges (transitive closure)
+    for u in graph.nodes():
+        # BFS to find reachable nodes and distances
+        visited = {u: 0}
+        queue = [u]
+
+        while queue:
+            curr = queue.pop(0)
+            dist = visited[curr]
+
+            # If we reached a node (other than start) that has observable edges,
+            # add connections from start 'u' to the targets of those edges.
+            if dist > 0 and curr in observable_out_edges:
+                for target, data in observable_out_edges[curr]:
+                    # Weight is distance in tau-graph + weight of the observable edge
+                    new_weight = data["weight"] + dist
+                    edges_to_add.append((u, target, data["transition"], new_weight))
+
+            if curr in tau_graph:
+                for neighbor in tau_graph[curr]:
+                    if neighbor not in visited:
+                        visited[neighbor] = dist + 1
+                        queue.append(neighbor)
+
+    # 5. Remove all tau edges
+    edges_to_remove = []
+    for u, v, k, data in graph.edges(keys=True, data=True):
+        if data["transition"].label is None:
+            edges_to_remove.append((u, v, k))
+
+    graph.remove_edges_from(edges_to_remove)
+
+    # 6. Add the new shortcut edges
+    for u, v, transition, weight in edges_to_add:
+        graph.add_edge(u, v, transition=transition, weight=weight)
+
+    return graph
+
+def remove_tau_add_successor_edges_optimized_old(graph: MultiDiGraph) -> MultiDiGraph:
+    # OPTIMIZATION 1: Find all initial tau edges just ONCE
+    tau_edges = [
+        (u, v, k) for u, v, k, data in graph.edges(keys=True, data=True)
+        if data["transition"].label is None
+    ]
+    
+    max_iterations = len(graph.nodes) + 1
+    iteration = 0
+    
+    # Process level-by-level to respect max_iterations
+    while tau_edges and iteration < max_iterations:
+        print(f"Iteration {iteration} of maximum {max_iterations} removing tau edges.")
+        iteration += 1
+        new_tau_edges = []
+        
+        for u, v, k in tau_edges:
+            # FIX: Ensure edge still exists (it might have been removed in a previous step)
+            if not graph.has_edge(u, v, key=k):
+                continue
+                
+            # OPTIMIZATION 2: Fast lookup of all outgoing edges and their data
+            # .out_edges(v) yields tuples of (source, target, key, data_dict)
+            for _, successor, out_k, out_data in list(graph.out_edges(v, keys=True, data=True)):
+                
+                new_transition = out_data["transition"]
+                new_weight = out_data.get("weight", 0) + 1
+                
+                # Add the new bypass edge
+                new_k = graph.add_edge(u, successor, transition=new_transition, weight=new_weight)
+                
+                # If the bypassed edge is ALSO a tau edge, queue it for the next iteration
+                if new_transition.label is None:
+                    new_tau_edges.append((u, successor, new_k))
+            
+            # Remove the original tau edge
+            graph.remove_edge(u, v, key=k)
+            
+        # Move to the next batch of newly discovered tau edges
+        tau_edges = new_tau_edges
+        
+    if tau_edges:
+        print("Warning: Maximum iterations reached. Remaining tau edges will be removed without adding successor edges.")
+        for u, v, k in tau_edges:
+            if graph.has_edge(u, v, key=k):
+                graph.remove_edge(u, v, key=k)
+                
+    return graph
 
 def construct_dfa(graph: MultiDiGraph, reachability_graph: MultiDiGraph):
     """
@@ -207,6 +320,6 @@ class DirectReachabilityGraph:
 
     def transform_rg_to_drg(self):
         temp = copy.deepcopy(self.reachability_graph)
-        temp = remove_tau_add_successor_edges(temp)
+        temp = remove_tau_add_successor_edges_optimized(temp) # TODO: Change this back to unoptimized if does not work!
         temp = remove_nodes_with_no_ingoing_arcs(temp)
         return add_enabled_activities_to_nodes_drg(temp)
