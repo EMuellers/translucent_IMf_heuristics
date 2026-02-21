@@ -336,14 +336,30 @@ def split_labels_in_apt(input_file, output_file):
 if __name__ == "__main__":
     # Testing some functionality
     import pandas as pd
-    from pm4py.objects.conversion.log import converter as log_converter
-    
-    #df = pd.read_csv(r"C:\Users\elias\Downloads\log_E.csv")
-    #log =log_converter.apply(df, variant=log_converter.Variants.TO_EVENT_LOG, parameters={'pm4py:param:case_id_key': "case_id", "activity_key": "activity"})
-    #tcl_log = translucent_log_to_tcl(log)
-    #net, im, fm = discover_net_with_regions_from_rooted_log(tcl_log, log_name="test_log")
-    
-    net, im, fm = load_apt_to_pm4py(r"C:\Users\elias\Downloads\test.pnml")
     import pm4py
+    from pm4py.objects.conversion.log import converter as log_converter
+    from new_eval.translucent_datasets.generate_noisy_datasets import get_noisy_log
+    from new_eval.utils.make_rooted import add_artificial_start_and_end_activities_translucent
+    from translucent_precision.main import translucent_precision_score 
+    from translucent_fitness.fitness import calculate_log_fitness
+    
+    
+    #df = pd.read_csv(r"C:\Users\elias\Masterarbeit_code\Spielplatz\Code_Harry\TranslucentActivityRelationships-main\new_eval\translucent_datasets\road_traffic_fine\road_traffic_fine_0.2.csv")
+    #log = get_noisy_log(df, "change_events")
+    #log =log_converter.apply(df, variant=log_converter.Variants.TO_EVENT_LOG, parameters={'pm4py:param:case_id_key': "case:concept:name", "activity_key": "concept:name"})
+    df = pd.read_csv(r"C:\Users\elias\Masterarbeit_code\Spielplatz\Code_Harry\TranslucentActivityRelationships-main\new_eval\translucent_datasets\Sepsis\Sepsis_0.2.csv")
+    all_activities = set(df['concept:name'].unique())
+    log = pm4py.format_dataframe(df, case_id="case:concept:name", activity_key="concept:name", timestamp_key="time:timestamp", timest_format="%Y-%m-%d %H:%M:%S%z")
+    log = pm4py.convert_to_event_log(log)
+    log = add_artificial_start_and_end_activities_translucent(log)
+    tcl_log = translucent_log_to_tcl(log)
+    #net, im, fm = discover_net_with_regions_from_rooted_log(tcl_log, log_name="road_traffic_fine")
+    #net, im, fm = parse_petrify_net_to_pm4py(r"C:\Users\elias\Masterarbeit_code\Spielplatz\Code_Harry\TranslucentActivityRelationships-main\new_eval\utils\petrify_nets\road_traffic_fine_net.g")
+    net, im, fm = pm4py.read_pnml(r"C:\Users\elias\Masterarbeit_code\Spielplatz\Code_Harry\TranslucentActivityRelationships-main\new_eval\utils\petrify_nets\Sepsis_0.2.pnml")
+    #fitness = pm4py.conformance.fitness_alignments(log, net, im, fm)["log_fitness"]
+    #precision = pm4py.conformance.precision_alignments(log, net, im, fm)
+    
+    precision = translucent_precision_score(log, net, im, fm)
+    #fitness = calculate_log_fitness(log, net, im, fm)
     pm4py.view_petri_net(net, im, fm)
     
