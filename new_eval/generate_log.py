@@ -105,8 +105,8 @@ def generate_log_without_noise(path_to_log, noise_threshold, alignment_parameter
     # First discover a ground truth model with the IMf
     net, im, fm = pm4py.discover_petri_net_inductive(log, noise_threshold=noise_threshold)
     
-    # Debug: Print the discovered model
-    #pm4py.view_petri_net(net, im, fm)
+    # Debug: Write the discovered model to a pnml file
+    #pm4py.write_pnml(net, im, fm, r"C:\Users\elias\Masterarbeit_code\Spielplatz\Code_Harry\TranslucentActivityRelationships-main\new_eval\utils\petrify_nets\Sepsis_0.2.pnml")
     
     variants = pm4py.statistics.variants.log.get.get_variants(log)
     variant_log = EventLog(attributes=log.attributes, extensions=log.extensions, classifiers=log.classifiers, omni_present=log.omni_present, properties=log.properties)
@@ -132,7 +132,11 @@ def generate_log_without_noise(path_to_log, noise_threshold, alignment_parameter
         index_in_real_trace = 0
         for aligned_event in alignment_result["alignment"]:
             if aligned_event[1][1] == '>>': # Log only move
+                # add the excecuted activity to the enabled activities, to stay in line with the definition of enabled activities
                 enabled_activities = drg.nodes[node]["enabled_activities"]
+                executed_activity = trace[index_in_real_trace]["concept:name"]
+                if executed_activity not in enabled_activities:
+                    enabled_activities.add(executed_activity)
                 trace[index_in_real_trace][enabled_activities_name] = ', '.join(enabled_activities)
                 index_in_real_trace += 1
                 

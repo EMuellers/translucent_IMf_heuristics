@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import random
 
 
 def manipulate_log(df, addition_percentage):
@@ -45,7 +46,7 @@ def manipulate_log(df, addition_percentage):
                 'case:concept:name': selected_caseid,
                 'concept:name': executed_activity,
                 'time:timestamp': selected_timestamp,
-                'enabled_activities': ','.join(enabled_activities_sample)  # Convert list back to comma-separated string
+                'enabled_activities': ', '.join(enabled_activities_sample)  # Convert list back to comma-separated string
             }
 
             # Append this dictionary to our list of new rows
@@ -66,3 +67,60 @@ def manipulate_log(df, addition_percentage):
     #df_updated.to_csv('log_after_adding_enabled.csv', index=False)
 
     return df_updated
+
+def manipulate_log_optimized(df, addition_percentage):
+    # Set random seeds for reproducibility
+    np.random.seed(42)
+    random.seed(42)
+
+    # Calculate number of new rows to add
+    num_new_rows = int(len(df) * addition_percentage)
+    if num_new_rows == 0:
+        return df
+
+    # OPTIMIZATION 1: Pre-calculate lists and probabilities ONCE
+    all_activities_list = list(df['concept:name'].unique())
+    max_enabled_activities = len(all_activities_list)
+
+    choices = np.arange(1, max_enabled_activities + 1)
+    weights = np.linspace(2, 1, max_enabled_activities)
+    probabilities = weights / weights.sum()
+
+    # OPTIMIZATION 2: Extract columns to NumPy arrays for instant lookup
+    # This completely eliminates the slow .iloc[] pandas overhead
+    case_ids = df['case:concept:name'].values
+    timestamps = df['time:timestamp'].values
+
+    # Bulk generate ALL random indices and activity counts in one go
+    random_indices = np.random.choice(len(df), size=num_new_rows, replace=False)
+    num_enabled_arr = np.random.choice(choices, size=num_new_rows, p=probabilities)
+
+    # Fast NumPy array indexing to get all selected caseids and timestamps instantly
+    selected_caseids = case_ids[random_indices]
+    selected_timestamps = timestamps[random_indices]
+
+    # Prepare lists for the string generation
+    enabled_activities_list = []
+    executed_activities_list = []
+
+    # OPTIMIZATION 3: Fast pure-Python loop for the random selections
+    for num_enabled in num_enabled_arr:
+        # random.sample is much faster than np.random.choice for sampling without replacement
+        sampled_acts = random.sample(all_activities_list, num_enabled)
+        executed_act = random.choice(sampled_acts)
+
+        enabled_activities_list.append(', '.join(sampled_acts))
+        executed_activities_list.append(executed_act)
+
+    # OPTIMIZATION 4: Construct the new DataFrame directly from lists/arrays
+    new_rows_df = pd.DataFrame({
+        'case:concept:name': selected_caseids,
+        'concept:name': executed_activities_list,
+        'time:timestamp': selected_timestamps,
+        'enabled_activities': enabled_activities_list
+    })
+
+    # Concatenate and return
+    updated_df = pd.concat([df, new_rows_df], ignore_index=True)
+    
+    return updated_df
