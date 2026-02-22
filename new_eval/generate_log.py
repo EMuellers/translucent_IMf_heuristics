@@ -101,7 +101,8 @@ def generate_log_with_noise(path_to_log, noise_threshold, alignment_parameters, 
 
 def generate_log_without_noise(path_to_log, noise_threshold, alignment_parameters, enabled_activities_name="enabled_activities"):
     log = pm4py.read_xes(path_to_log, return_legacy_log_object=True)
-    
+    # Clean the activity names for petrify to work correctly
+    log = clean_activity_names(log)
     # First discover a ground truth model with the IMf
     net, im, fm = pm4py.discover_petri_net_inductive(log, noise_threshold=noise_threshold)
     
@@ -174,6 +175,21 @@ def generate_log_without_noise(path_to_log, noise_threshold, alignment_parameter
             global_case_id_counter +=1
     return annotated_log
 
+def clean_activity_names(log: EventLog) -> EventLog:
+    """
+    Replaces underscores and hyphens with spaces in the activity names of the event log. Needed for petrify to work correctly.
+
+    :param log: The input event log.
+    :type log: EventLog
+    :return: The modified event log.
+    :rtype: EventLog
+    """
+    for trace in log:
+        for event in trace:
+            name = event.get("concept:name")
+            if name:
+                event["concept:name"] = name.replace("_", " ").replace("-", " ")
+    return log
 
 if __name__ == "__main__":
     log_path = r"C:\\Users\\elias\\Masterarbeit_code\\Spielplatz\\Code_Harry\\TranslucentActivityRelationships-main\\evaluation\\sepsis\\Sepsis Cases - Event Log.xes.gz"
