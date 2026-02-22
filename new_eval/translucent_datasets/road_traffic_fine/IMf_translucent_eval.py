@@ -1,24 +1,19 @@
 import warnings
-import traceback
 from functools import partial
 import multiprocessing as mp
 import pandas as pd
 import os
 from pathlib import Path
 import pm4py
-import subprocess
 import time
-import copy
 import sys
 if os.name != 'nt': # Windows
         sys.path.append("/home/eliasmullers/Desktop/thesis/TranslucentActivityRelationships-main")
 else:
         sys.path.append("C:\\Users\\elias\\Masterarbeit_code\\Spielplatz\\Code_Harry\\TranslucentActivityRelationships-main")
 
-from new_eval.translucent_datasets.generate_noisy_datasets import get_noisy_log
 from new_eval.utils.make_rooted import add_artificial_start_and_end_activities_translucent
 from translucent_precision.main import translucent_precision_score
-from evaluation.translucent_f_1_score import compute_f_1_scores
 from translucent_fitness.fitness import calculate_log_fitness
 from translucent_discovery.translucent_inductive_miner.translucent_base import discover_petri_net
 from pandas.errors import SettingWithCopyWarning
@@ -168,54 +163,27 @@ def evaluate_single_filter(f, log, noise_type, parameters=None):
         "simplicity_ts": simplicity_ts,
         "failed": False
         }
-    """
-    result_data = {
-        "time": duration,
-        "RAM": max_memory / 1024, # Convert to MB
-        "fitness": fitness,
-        "precision": precision,
-        "translucent_fitness": translucent_fitness,
-        "translucent_precision": translucent_precision,
-        "f_1_score": f_1_score,
-        "translucent_f_1_score": translucent_f_1_score,
-        "failed": False
-        }
-    
-    except Exception as e:
-        # Define empty result structure for failure
-        failure_result = {
-            "time": 0, "RAM": 0, "fitness": 0, "precision": 0,
-            "translucent_fitness": 0, "translucent_precision": 0,
-            "f_1_score": 0, "translucent_f_1_score": 0,
-            "failed": True
-        }
-        error_info = traceback.format_exc()
-        if isinstance(e, subprocess.CalledProcessError):
-            print(f"IMf failed for noise type {noise_type}, filter {f} with error: {e}")
-            write_error_to_file(e, noise_type, error_info)
-            result_data = failure_result
-        else:
-            print(f"An unexpected error occurred for noise type {noise_type}, filter {f} with error: {e}")
-            write_error_to_file(e, noise_type, error_info)
-            # In parallel execution, raising an error stops the whole pool. 
-            #raise e
-    """    
+   
     print(f"Completed evaluation for noise type: {noise_type}, filter: {f}, parameters: {parameters}. Result: {result_data}")    
     return f, result_data
 
-def evaluate_noise_type(noise_type, base_log):
-    local_log = copy.deepcopy(base_log) 
+def prettify_config_for_file_name(config):
+    # Convert a config dictionary to a string that is suitable for use in file names
+    return "_".join([f"{k}_{v}" for k, v in config.items()])
+
+def evaluate_noise_type(noise_type, log_path):
     
     # Handle noise type string/boolean logic
     noise_label = noise_type if noise_type else "base"
     
     if not noise_type: # base log without noise
-        local_log = pm4py.format_dataframe(local_log, case_id="case:concept:name", activity_key="concept:name", timestamp_key="time:timestamp", timest_format="%Y-%m-%d %H:%M:%S%z")
-        log = pm4py.convert_to_event_log(local_log)
+        log_path = log_path / f"{LOG_NAME}_0.2.csv"
     else: # Add noise to the log
-        log = get_noisy_log(local_log, noise_type)
-        log = pm4py.format_dataframe(log, case_id="case:concept:name", activity_key="concept:name", timestamp_key="time:timestamp", timest_format="%Y-%m-%d %H:%M:%S%z")
-        log = pm4py.convert_to_event_log(log)
+        log_path = log_path / f"{LOG_NAME}_0.2_{noise_type}.csv"
+    
+    log = pd.read_csv(log_path)
+    log = pm4py.format_dataframe(log, case_id="case:concept:name", activity_key="concept:name", timestamp_key="time:timestamp", timest_format="%Y-%m-%d %H:%M:%S%z")
+    log = pm4py.convert_to_event_log(log)
         
     # Make the log rooted
     log = add_artificial_start_and_end_activities_translucent(log)
@@ -247,7 +215,7 @@ def evaluate_noise_type(noise_type, base_log):
         results_folder.mkdir(parents=True, exist_ok=True)
     
         # Store the results as a .csv file, include the parameter settings in the file name
-        results_path = results_folder / f"IMf_results_{config}.csv"
+        results_path = results_folder / f"IMf_results_{prettify_config_for_file_name(config)}.csv"
         results_df = pd.DataFrame([IMf_results])
         results_df = pd.DataFrame.from_dict(IMf_results, orient='index')
         results_df.to_csv(results_path, index=True, index_label='threshold')
@@ -257,22 +225,15 @@ def evaluate_noise_type(noise_type, base_log):
 
 if __name__ == "__main__":
     
-    parameter_configs = generate_minor_heuristics_parameter_configs()
-    
     noise_types = [False, "add_enabled", "remove_enabled", "add_events", "change_events"]
     
-    #noise_types = ["remove_enabled"]
-    
-    path_to_log = Path(f"new_eval/translucent_datasets/{LOG_NAME}/{LOG_NAME}_0.2.csv")
+    path_to_log = Path(f"new_eval/translucent_datasets/{LOG_NAME}")
     
     if os.name == 'nt': # Windows
         path_to_log = Path(f"C:\\Users\\elias\\Masterarbeit_code\\Spielplatz\\Code_Harry\\TranslucentActivityRelationships-main\\new_eval\\translucent_datasets\\{LOG_NAME}\\{LOG_NAME}_0.2.csv")
     
-    # Import the log
-    base_log = pd.read_csv(path_to_log)
-    
     # Sequential execution of noise types
     for noise in noise_types:
-        evaluate_noise_type(noise, base_log)
+        evaluate_noise_type(noise, path_to_log)
     
     print(LOG_NAME + ": IMf_translucent evaluation completed for all noise types.")

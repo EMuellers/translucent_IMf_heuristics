@@ -9,18 +9,15 @@ from pathlib import Path
 import pm4py
 from subprocess import CalledProcessError
 import time
-import copy
 import sys
 if os.name != 'nt': # Windows
         sys.path.append("/home/eliasmullers/Desktop/thesis/TranslucentActivityRelationships-main")
 else:
         sys.path.append("C:\\Users\\elias\\Masterarbeit_code\\Spielplatz\\Code_Harry\\TranslucentActivityRelationships-main")
 
-from new_eval.translucent_datasets.generate_noisy_datasets import get_noisy_log
 from new_eval.utils.discover_model_with_regions import discover_net_with_regions_from_rooted_log
 from new_eval.utils.make_rooted import add_artificial_start_and_end_activities_translucent
 from translucent_precision.main import translucent_precision_score
-from evaluation.translucent_f_1_score import compute_f_1_scores
 from translucent_fitness.fitness import calculate_log_fitness
 from translucent_discovery.translucent_inductive_miner.translucent_datatype import translucent_log_to_tcl
 
@@ -37,27 +34,16 @@ def write_error_to_file(error, noise_type, error_info=None):
         if error_info:
             f.write("\nFull traceback:\n" + error_info)
 
-def evaluate_noise_type(noise_type, base_log):
-    local_log = copy.deepcopy(base_log) 
+def evaluate_noise_type(noise_type, log_path):
     if not noise_type: # base log without noise
         noise_type = "base"
-        #local_log['time:timestamp'] = pd.to_datetime(local_log['time:timestamp'])
-        # Create a list of columns to convert (everything except 'time')
-        #cols_to_convert = local_log.columns.difference(['time:timestamp'])
-
-        # Convert those columns to string
-        #local_log[cols_to_convert] = local_log[cols_to_convert].astype(str)
-        local_log = pm4py.format_dataframe(local_log, case_id="case:concept:name", activity_key="concept:name", timestamp_key="time:timestamp", timest_format="%Y-%m-%d %H:%M:%S%z")
-        log = pm4py.convert_to_event_log(local_log)
-    else: # Add noise to the log
-        log = get_noisy_log(local_log, noise_type)
-        #log['time:timestamp'] = pd.to_datetime(log['time:timestamp'])
-        # Create a list of columns to convert (everything except 'time')
-        #cols_to_convert = log.columns.difference(['time:timestamp'])
-        # Convert those columns to string
-        #log[cols_to_convert] = log[cols_to_convert].astype(str)
-        log = pm4py.format_dataframe(log, case_id="case:concept:name", activity_key="concept:name", timestamp_key="time:timestamp", timest_format="%Y-%m-%d %H:%M:%S%z")
-        log = pm4py.convert_to_event_log(log)
+        log_path = log_path / f"{LOG_NAME}_0.2.csv"
+    else: # Get noisy log
+        log_path = log_path / f"{LOG_NAME}_0.2_{noise_type}.csv"
+        
+    log = pd.read_csv(log_path)
+    log = pm4py.format_dataframe(log, case_id="case:concept:name", activity_key="concept:name", timestamp_key="time:timestamp", timest_format="%Y-%m-%d %H:%M:%S%z")
+    log = pm4py.convert_to_event_log(log)
         
     # Make the log rooted by adding artificial start and end events
     log = add_artificial_start_and_end_activities_translucent(log)
@@ -134,18 +120,12 @@ if __name__ == "__main__":
     
     noise_types = [False, "add_enabled", "remove_enabled", "add_events", "change_events"]
     
-    path_to_log = Path(f"new_eval/translucent_datasets/{LOG_NAME}/{LOG_NAME}_0.2.csv")
+    path_to_log = Path(f"new_eval/translucent_datasets/{LOG_NAME}")
     
     if os.name == 'nt': # Windows
-        path_to_log = Path(f"C:\\Users\\elias\\Masterarbeit_code\\Spielplatz\\Code_Harry\\TranslucentActivityRelationships-main\\new_eval\\translucent_datasets\\{LOG_NAME}\\{LOG_NAME}_0.2.csv")
+        path_to_log = Path(f"C:\\Users\\elias\\Masterarbeit_code\\Spielplatz\\Code_Harry\\TranslucentActivityRelationships-main\\new_eval\\translucent_datasets\\{LOG_NAME}")
     
-    # Import the log
-    base_log = pd.read_csv(path_to_log)
-    
-    func = partial(evaluate_noise_type, base_log=base_log)
-
-    #evaluate_noise_type(False, base_log)
-    
+    func = partial(evaluate_noise_type, log_path=path_to_log)
     
     # 3. Use the pool
     num_processes = min(mp.cpu_count(), len(noise_types))

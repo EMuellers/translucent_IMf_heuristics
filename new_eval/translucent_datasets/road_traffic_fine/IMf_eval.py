@@ -8,15 +8,12 @@ from pathlib import Path
 import pm4py
 import subprocess
 import time
-import copy
 import sys
 if os.name != 'nt': # Windows
         sys.path.append("/home/eliasmullers/Desktop/thesis/TranslucentActivityRelationships-main")
 
-from new_eval.translucent_datasets.generate_noisy_datasets import get_noisy_log
 from new_eval.utils.make_rooted import add_artificial_start_and_end_activities_translucent
 from translucent_precision.main import translucent_precision_score
-from evaluation.translucent_f_1_score import compute_f_1_scores
 from translucent_fitness.fitness import calculate_log_fitness
 from pandas.errors import SettingWithCopyWarning
 warnings.simplefilter(action='ignore', category=SettingWithCopyWarning)
@@ -42,10 +39,10 @@ def evaluate_single_filter(f, log, noise_type):
     result_data = {}
     
     try:
-        start = time.time()
         # Execute Inductive Miner f
         #TODO: Find a way to record RAM usage!
         max_memory = 0 # Placeholder for RAM usage, as measuring it in Python is non-trivial and often requires external libraries or tools.
+        start = time.time()
         net, im, fm = pm4py.discovery.discover_petri_net_inductive(log, noise_threshold=f)
         
         
@@ -105,30 +102,19 @@ def evaluate_single_filter(f, log, noise_type):
     print(f"Completed evaluation for noise type: {noise_type}, filter: {f}. Result: {result_data}")    
     return f, result_data
 
-def evaluate_noise_type(noise_type, base_log):
-    local_log = copy.deepcopy(base_log) 
+def evaluate_noise_type(noise_type, log_path):
     
     # Handle noise type string/boolean logic
     noise_label = noise_type if noise_type else "base"
     
     if not noise_type: # base log without noise
-        #local_log['time:timestamp'] = pd.to_datetime(local_log['time:timestamp'])
-        # Create a list of columns to convert (everything except 'time')
-        #cols_to_convert = local_log.columns.difference(['time:timestamp'])
-
-        # Convert those columns to string
-        #local_log[cols_to_convert] = local_log[cols_to_convert].astype(str)
-        local_log = pm4py.format_dataframe(local_log, case_id="case:concept:name", activity_key="concept:name", timestamp_key="time:timestamp", timest_format="%Y-%m-%d %H:%M:%S%z")
-        log = pm4py.convert_to_event_log(local_log)
+        log_path = log_path / f"{LOG_NAME}_0.2.csv"
     else: # Add noise to the log
-        log = get_noisy_log(local_log, noise_type)
-        #log['time:timestamp'] = pd.to_datetime(log['time:timestamp'])
-        # Create a list of columns to convert (everything except 'time')
-        #cols_to_convert = log.columns.difference(['time:timestamp'])
-        # Convert those columns to string
-        #log[cols_to_convert] = log[cols_to_convert].astype(str)
-        log = pm4py.format_dataframe(log, case_id="case:concept:name", activity_key="concept:name", timestamp_key="time:timestamp", timest_format="%Y-%m-%d %H:%M:%S%z")
-        log = pm4py.convert_to_event_log(log)
+        log_path = log_path / f"{LOG_NAME}_0.2_{noise_type}.csv"
+        
+    log = pd.read_csv(log_path)
+    log = pm4py.format_dataframe(log, case_id="case:concept:name", activity_key="concept:name", timestamp_key="time:timestamp", timest_format="%Y-%m-%d %H:%M:%S%z")
+    log = pm4py.convert_to_event_log(log)
         
     # Make the log rooted
     log = add_artificial_start_and_end_activities_translucent(log)
@@ -168,13 +154,10 @@ if __name__ == "__main__":
     
     noise_types = [False, "add_enabled", "remove_enabled", "add_events", "change_events"]
     
-    path_to_log = Path(f"new_eval/translucent_datasets/{LOG_NAME}/{LOG_NAME}_0.2.csv")
-    
-    # Import the log
-    base_log = pd.read_csv(path_to_log)
-    
+    path_to_log = Path(f"new_eval/translucent_datasets/{LOG_NAME}")
+
     # Sequential execution of noise types
     for noise in noise_types:
-        evaluate_noise_type(noise, base_log)
+        evaluate_noise_type(noise, path_to_log)
     
     print(LOG_NAME + ": IMf evaluation completed for all noise types.")
