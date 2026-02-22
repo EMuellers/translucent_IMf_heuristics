@@ -35,17 +35,19 @@ for model_noise_threshold in model_noise_threshold_list:
             if executed_activity not in enabled_activities:
                 print(f"Error: Executed activity '{executed_activity}' is not in the set of enabled activities {enabled_activities} for event {i} in trace {trace.attributes['concept:name']}")
     
-    # Write the noisy logs
-    for noise_type in noise_types:
-        noisy_log = get_noisy_log(copy.deepcopy(annotated_log), noise_type)
-        output_log_path = f"/home/eliasmullers/Desktop/thesis/TranslucentActivityRelationships-main/new_eval/translucent_datasets/{dataset_name}/{dataset_name}_{model_noise_threshold}_{noise_type}.csv"
-        df_log = pm4py.convert_to_dataframe(noisy_log)
-        df_log.to_csv(output_log_path, index=False)
-        print(f'Generated translucent log with noise type {noise_type} and noise threshold {model_noise_threshold} at {output_log_path}')
-
     
     # Write the log without noise
     output_log_path = f"/home/eliasmullers/Desktop/thesis/TranslucentActivityRelationships-main/new_eval/translucent_datasets/{dataset_name}/{dataset_name}_{model_noise_threshold}.csv"
     df_log = pm4py.convert_to_dataframe(annotated_log)
     df_log.to_csv(output_log_path, index=False)
     print(f'Generated translucent log with noise threshold {model_noise_threshold} at {output_log_path}')
+    
+    # Write the noisy logs
+    for noise_type in noise_types:
+        noisy_log = get_noisy_log(copy.deepcopy(df_log), noise_type)
+        output_log_path = f"/home/eliasmullers/Desktop/thesis/TranslucentActivityRelationships-main/new_eval/translucent_datasets/{dataset_name}/{dataset_name}_{model_noise_threshold}_{noise_type}.csv"
+        noisy_log.to_csv(output_log_path, index=False)
+        print(f'Generated translucent log with noise type {noise_type} and noise threshold {model_noise_threshold} at {output_log_path}')
+
+    
+
