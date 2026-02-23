@@ -13,7 +13,7 @@ if os.name != 'nt': # Windows
         sys.path.append("/home/eliasmullers/Desktop/thesis/TranslucentActivityRelationships-main")
 
 from new_eval.utils.make_rooted import add_artificial_start_and_end_activities_translucent
-from translucent_precision.main import translucent_precision_score
+from translucent_precision.main import translucent_precision_score_eval_version as translucent_precision_score
 from translucent_fitness.fitness import calculate_log_fitness
 from pandas.errors import SettingWithCopyWarning
 warnings.simplefilter(action='ignore', category=SettingWithCopyWarning)
@@ -49,14 +49,14 @@ def evaluate_single_filter(f, log, noise_type):
         duration = time.time() - start
         
         # Calculate scores
-        print("Starting calculation of fitness for noise type: " + noise_type + " and filter: " + str(f))
-        fitness = pm4py.conformance.fitness_alignments(log, net, im, fm)["log_fitness"]
+        #print("Starting calculation of fitness for noise type: " + noise_type + " and filter: " + str(f))
+        #fitness = pm4py.conformance.fitness_alignments(log, net, im, fm)["log_fitness"]
         print("Starting calculation of precision for noise type: " + noise_type + " and filter: " + str(f))
         precision = pm4py.conformance.precision_alignments(log, net, im, fm)
         print("Starting calculation of translucent fitness for noise type: " + noise_type + " and filter: " + str(f))
         translucent_fitness = calculate_log_fitness(log, net, im, fm)
         print("Starting calculation of translucent precision for noise type: " + noise_type + " and filter: " + str(f))
-        translucent_precision = translucent_precision_score(log, net, im, fm)
+        translucent_precision, fitness = translucent_precision_score(log, net, im, fm)
         
         # Calculate F1 scores (handle division by zero if needed, though standard formula assumes non-zero sum usually)
         denom_f1 = fitness + precision

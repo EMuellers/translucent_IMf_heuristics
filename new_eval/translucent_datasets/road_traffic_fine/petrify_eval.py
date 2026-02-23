@@ -17,7 +17,7 @@ else:
 
 from new_eval.utils.discover_model_with_regions import discover_net_with_regions_from_rooted_log
 from new_eval.utils.make_rooted import add_artificial_start_and_end_activities_translucent
-from translucent_precision.main import translucent_precision_score
+from translucent_precision.main import translucent_precision_score_eval_version as translucent_precision_score
 from translucent_fitness.fitness import calculate_log_fitness
 from translucent_discovery.translucent_inductive_miner.translucent_datatype import translucent_log_to_tcl
 
@@ -65,14 +65,14 @@ def evaluate_noise_type(noise_type, log_path):
         petrify_results["RAM"] = max_memory / (1024) # Convert to MB
         
         # Calculate the scores
-        print("Starting calculation of fitness for noise type " + noise_type)
-        petrify_results["fitness"] = pm4py.conformance.fitness_alignments(log, net, im, fm)["log_fitness"]
+        #print("Starting calculation of fitness for noise type " + noise_type)
+        #petrify_results["fitness"] = pm4py.conformance.fitness_alignments(log, net, im, fm)["log_fitness"]
         print("Starting calculation of precision for noise type " + noise_type)
         petrify_results["precision"] = pm4py.conformance.precision_alignments(log, net, im, fm)
         print("Starting calculation of translucent fitness for noise type " + noise_type)
         petrify_results["translucent_fitness"] = calculate_log_fitness(log, net, im, fm)
         print("Starting calculation of translucent precision for noise type " + noise_type)
-        petrify_results["translucent_precision"] = translucent_precision_score(log, net, im, fm)
+        petrify_results["translucent_precision"], petrify_results["fitness"] = translucent_precision_score(log, net, im, fm)
         petrify_results["f_1_score"] = (2 * petrify_results["fitness"] * petrify_results["precision"]) / (petrify_results["fitness"] + petrify_results["precision"]) if (petrify_results["fitness"] + petrify_results["precision"]) > 0 else 0
         petrify_results["translucent_f_1_score"] = (2 * petrify_results["translucent_fitness"] * petrify_results["translucent_precision"]) / (petrify_results["translucent_fitness"] + petrify_results["translucent_precision"]) if (petrify_results["translucent_fitness"] + petrify_results["translucent_precision"]) > 0 else 0
         petrify_results["simplicity"] = len(net.places) + len(net.transitions) + len(net.arcs)

@@ -13,7 +13,7 @@ else:
         sys.path.append("C:\\Users\\elias\\Masterarbeit_code\\Spielplatz\\Code_Harry\\TranslucentActivityRelationships-main")
 
 from new_eval.utils.make_rooted import add_artificial_start_and_end_activities_translucent
-from translucent_precision.main import translucent_precision_score
+from translucent_precision.main import translucent_precision_score_eval_version as translucent_precision_score
 from translucent_fitness.fitness import calculate_log_fitness
 from translucent_discovery.translucent_inductive_miner.translucent_base import discover_petri_net
 from pandas.errors import SettingWithCopyWarning
@@ -113,18 +113,18 @@ def evaluate_single_filter(f, log, noise_type, parameters=None):
     
     
     # Calculate scores
-    print("Starting calculation of fitness for noise type: " + noise_type + " and filter: " + str(f) + " and parameters: " + str(parameters))
-    fitness_tf = pm4py.conformance.fitness_alignments(log, net_tf, im_tf, fm_tf)["log_fitness"]
-    fitness_ts = pm4py.conformance.fitness_alignments(log, net_ts, im_ts, fm_ts)["log_fitness"]
+    #print("Starting calculation of fitness for noise type: " + noise_type + " and filter: " + str(f) + " and parameters: " + str(parameters))
+    #fitness_tf = pm4py.conformance.fitness_alignments(log, net_tf, im_tf, fm_tf)["log_fitness"]
+    #fitness_ts = pm4py.conformance.fitness_alignments(log, net_ts, im_ts, fm_ts)["log_fitness"]
     print("Starting calculation of precision for noise type: " + noise_type + " and filter: " + str(f) + " and parameters: " + str(parameters))
     precision_tf = pm4py.conformance.precision_alignments(log, net_tf, im_tf, fm_tf)
     precision_ts = pm4py.conformance.precision_alignments(log, net_ts, im_ts, fm_ts)
     print("Starting calculation of translucent fitness and precision for IMtf for noise type: " + noise_type + " and filter: " + str(f))
     translucent_fitness_tf = calculate_log_fitness(log, net_tf, im_tf, fm_tf)
-    translucent_precision_tf = translucent_precision_score(log, net_tf, im_tf, fm_tf)
+    translucent_precision_tf, fitness_tf = translucent_precision_score(log, net_tf, im_tf, fm_tf)
     print("Starting calculation of translucent fitness and precision for IMts for noise type: " + noise_type + " and filter: " + str(f) + " and parameters: " + str(parameters))
     translucent_fitness_ts = calculate_log_fitness(log, net_ts, im_ts, fm_ts)
-    translucent_precision_ts = translucent_precision_score(log, net_ts, im_ts, fm_ts)
+    translucent_precision_ts, fitness_ts = translucent_precision_score(log, net_ts, im_ts, fm_ts)
     
     # Calculate F1 scores (handle division by zero if needed, though standard formula assumes non-zero sum usually)
     denom_f1_tf = fitness_tf + precision_tf
@@ -190,7 +190,12 @@ def evaluate_noise_type(noise_type, log_path):
     
     filter_values = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     
+    
+    filter_values = [0.4] #TODO!
+    
     parameter_configs = generate_minor_heuristics_parameter_configs() # TODO: Change this for full eval!
+    
+    parameter_configs = parameter_configs[:2] # For testing only
     
     for config in parameter_configs:
     
@@ -226,11 +231,12 @@ def evaluate_noise_type(noise_type, log_path):
 if __name__ == "__main__":
     
     noise_types = [False, "add_enabled", "remove_enabled", "add_events", "change_events"]
+    noise_types = ["add_enabled"] #TODO!
     
     path_to_log = Path(f"new_eval/translucent_datasets/{LOG_NAME}")
     
     if os.name == 'nt': # Windows
-        path_to_log = Path(f"C:\\Users\\elias\\Masterarbeit_code\\Spielplatz\\Code_Harry\\TranslucentActivityRelationships-main\\new_eval\\translucent_datasets\\{LOG_NAME}\\{LOG_NAME}_0.2.csv")
+        path_to_log = Path(f"C:\\Users\\elias\\Masterarbeit_code\\Spielplatz\\Code_Harry\\TranslucentActivityRelationships-main\\new_eval\\translucent_datasets\\{LOG_NAME}")
     
     # Sequential execution of noise types
     for noise in noise_types:
