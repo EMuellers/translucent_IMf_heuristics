@@ -1,5 +1,6 @@
 from typing import Optional
 
+from collections import deque
 import networkx as nx
 #from bs4 import BeautifulSoup
 from pm4py import PetriNet, Marking
@@ -12,7 +13,7 @@ from pm4py.util.typing import AlignmentResult
 
 from translucent_fitness.utils import add_artificial_end_transition, ARTIFICIAL_END_TRANSITION_NAME, ARTIFICIAL_END_TRANSITION_LABEL
 
-
+"""
 class TranslucentReachabilityGraph(nx.MultiDiGraph):
     def __init__(self, accepting_petri_net: tuple[PetriNet, Marking, Marking]):
         if not is_workflow_net(accepting_petri_net[0]):
@@ -60,6 +61,84 @@ class TranslucentReachabilityGraph(nx.MultiDiGraph):
                 self.add_edge(current_node, self.marking_map[post_marking], firing_sequence=arc[2], label=arc[3],
                               cost=0 if arc[2][-1] == ARTIFICIAL_END_TRANSITION_NAME else 1)
         self.best_worst_cost = nx.dijkstra_path_length(self, self.initial_state, self.final_state, weight='cost')
+"""
+# This is a new faster version
+class TranslucentReachabilityGraph(nx.MultiDiGraph):
+    def __init__(self, accepting_petri_net: tuple[PetriNet, Marking, Marking]):
+        if not is_workflow_net(accepting_petri_net[0]):
+            raise ValueError("The Petri net is not a workflow net")
+
+        accepting_petri_net = add_artificial_end_transition(accepting_petri_net)
+        super().__init__()
+        
+        net, initial_marking, final_marking = accepting_petri_net
+        self.transition_labels = {t.name: t.label for t in net.transitions}
+        
+        self.marking_map = {initial_marking: 0, final_marking: 1}
+        self.initial_state = 0
+        self.final_state = 1
+        
+        self.add_node(0, marking=initial_marking, enabled=set())
+        self.add_node(1, marking=final_marking, enabled=set())
+        
+        open_list = [0]
+        
+        # Cache to avoid recomputing transitions for markings we've already analyzed
+        # Maps a Marking -> list of (transition, next_marking)
+        semantics_cache = {}
+
+        def get_observable_arcs(start_marking: Marking) -> list[tuple[Marking, tuple[str, ...], str]]:
+            """Iteratively finds all paths of silent transitions leading to a visible transition."""
+            arcs = []
+            # Queue stores: (current_marking, visited_markings_set, firing_sequence_tuple)
+            queue = deque([(start_marking, {start_marking}, ())])
+            
+            while queue:
+                current_m, visited, seq = queue.popleft()
+                
+                # Use cache if available to speed up pm4py semantics
+                if current_m not in semantics_cache:
+                    semantics_cache[current_m] = [
+                        (t, execute(t, net, current_m)) for t in enabled_transitions(net, current_m)
+                    ]
+                
+                for transition, next_m in semantics_cache[current_m]:
+                    new_seq = seq + (transition.name,)
+                    
+                    if transition.label is not None:
+                        # Reached a visible transition, yield the arc
+                        arcs.append((next_m, new_seq, transition.label))
+                    elif next_m not in visited:
+                        # Reached a silent transition, continue searching iteratively
+                        new_visited = visited.copy()
+                        new_visited.add(next_m)
+                        queue.append((next_m, new_visited, new_seq))
+            return arcs
+
+        # Build the graph iteratively
+        while open_list:
+            current_node = open_list.pop()
+            current_marking = self.nodes[current_node]['marking']
+            
+            for post_marking, firing_sequence, label in get_observable_arcs(current_marking):
+                
+                if post_marking not in self.marking_map:
+                    new_node_id = self.number_of_nodes()
+                    self.marking_map[post_marking] = new_node_id
+                    self.add_node(new_node_id, marking=post_marking, enabled=set())
+                    open_list.append(new_node_id)
+                
+                if label is not ARTIFICIAL_END_TRANSITION_LABEL:
+                    self.nodes[current_node]['enabled'].add(label)
+                
+                cost = 0 if firing_sequence[-1] == ARTIFICIAL_END_TRANSITION_NAME else 1
+                self.add_edge(current_node, self.marking_map[post_marking], 
+                              firing_sequence=firing_sequence, 
+                              label=label, 
+                              cost=cost)
+                              
+        self.best_worst_cost = nx.dijkstra_path_length(self, self.initial_state, self.final_state, weight='cost')
+
     """
     def view(self) -> None:
         net = Network(width='100%', height='100%', directed=True)
