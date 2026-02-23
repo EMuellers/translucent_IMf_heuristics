@@ -16,7 +16,7 @@ def calculate_log_fitness(log, petri_net, initial_marking, final_marking):
     variant_counter = 0
     number_of_variants = len(variants)
     for variant in variants:
-        print(f"Calculating fitness for variant {variant_counter+1}/{number_of_variants}")
+        print(f"Calculating translucent fitness for variant {variant_counter+1}/{number_of_variants}")
         translucent_alignment = align(variants[variant][0], trg, inverse_trg)
         sum_cost += translucent_alignment["cost"] * len(variants[variant][1])
         sum_bwc += translucent_alignment["bwc"] * len(variants[variant][1])
