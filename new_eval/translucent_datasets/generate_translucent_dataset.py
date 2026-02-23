@@ -15,7 +15,9 @@ from new_eval.translucent_datasets.generate_noisy_datasets import get_noisy_log
 
 
 dataset_path="/home/eliasmullers/Desktop/thesis/TranslucentActivityRelationships-main/new_eval/original_datasets/Sepsis Cases - Event Log.xes.gz"
-dataset_name='Sepsis'
+if os.name == 'nt': # Windows
+    dataset_path = r"C:\Users\elias\Masterarbeit_code\Spielplatz\Code_Harry\TranslucentActivityRelationships-main\new_eval\original_datasets\Hospital Billing - Event Log.xes.gz"
+dataset_name='hospital_billing'
 model_noise_threshold_list=[0.2]
 noise_types = ["add_enabled", "add_events", "remove_enabled", "change_events"]
 
@@ -38,6 +40,8 @@ for model_noise_threshold in model_noise_threshold_list:
     
     # Write the log without noise
     output_log_path = f"/home/eliasmullers/Desktop/thesis/TranslucentActivityRelationships-main/new_eval/translucent_datasets/{dataset_name}/{dataset_name}_{model_noise_threshold}.csv"
+    if os.name == 'nt': # Windows
+        output_log_path = f"C:\\Users\\elias\\Masterarbeit_code\\Spielplatz\\Code_Harry\\TranslucentActivityRelationships-main\\new_eval\\translucent_datasets\\{dataset_name}\\{dataset_name}_{model_noise_threshold}.csv"
     df_log = pm4py.convert_to_dataframe(annotated_log)
     df_log.to_csv(output_log_path, index=False)
     print(f'Generated translucent log with noise threshold {model_noise_threshold} at {output_log_path}')
@@ -46,6 +50,8 @@ for model_noise_threshold in model_noise_threshold_list:
     for noise_type in noise_types:
         noisy_log = get_noisy_log(copy.deepcopy(df_log), noise_type)
         output_log_path = f"/home/eliasmullers/Desktop/thesis/TranslucentActivityRelationships-main/new_eval/translucent_datasets/{dataset_name}/{dataset_name}_{model_noise_threshold}_{noise_type}.csv"
+        if os.name == 'nt': # Windows
+            output_log_path = f"C:\\Users\\elias\\Masterarbeit_code\\Spielplatz\\Code_Harry\\TranslucentActivityRelationships-main\\new_eval\\translucent_datasets\\{dataset_name}\\{dataset_name}_{model_noise_threshold}_{noise_type}.csv"
         noisy_log.to_csv(output_log_path, index=False)
         print(f'Generated translucent log with noise type {noise_type} and noise threshold {model_noise_threshold} at {output_log_path}')
 
