@@ -99,3 +99,18 @@ def translucent_precision_score(log: Union[pd.DataFrame, EventLog], net: PetriNe
     drg = d.direct_reachability_graph
     dfa = d.dfa
     return compute_translucent_precision(alignments, alignment_enabled_prefix_automaton, r_g, drg, dfa)
+
+def translucent_precision_score_eval_version(log: Union[pd.DataFrame, EventLog], net: PetriNet, initial_marking: Marking,
+                                final_marking: Marking):
+    if isinstance(log, pd.DataFrame):
+        log = log_converter.apply(log, variant=log_converter.Variants.TO_EVENT_LOG)
+    alignments = get_alignments(log, net, initial_marking, final_marking)
+    fitness = pm4py.algo.evaluation.replay_fitness.variants.alignment_based.evaluate(alignments) ["log_fitness"]
+
+    alignment_enabled_prefix_automaton = AlignmentEnabledPrefixAutomaton(log,
+                                                                         net, initial_marking, final_marking, alignments).alignment_enabled_prefix_automaton
+    r_g = ReachabilityGraph(net, initial_marking, final_marking, 1)
+    d = DirectReachabilityGraph(r_g)
+    drg = d.direct_reachability_graph
+    dfa = d.dfa
+    return compute_translucent_precision(alignments, alignment_enabled_prefix_automaton, r_g, drg, dfa), fitness
