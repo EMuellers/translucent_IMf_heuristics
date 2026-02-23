@@ -1,10 +1,12 @@
 from translucent_fitness.translucent_reachability_graph import TranslucentReachabilityGraph
 from translucent_fitness.utils import get_translucent_trace_variants
 from translucent_fitness.translucent_alignment import align
+import networkx as nx
 
 def calculate_log_fitness(log, petri_net, initial_marking, final_marking):
     """Calculate fitness based on translucent alignments."""
     trg = TranslucentReachabilityGraph((petri_net, initial_marking, final_marking))
+    inverse_trg = nx.MultiDiGraph(trg).reverse(copy=False)
     sum_cost = 0
     sum_bwc = 0
     for trace in log:
@@ -15,7 +17,7 @@ def calculate_log_fitness(log, petri_net, initial_marking, final_marking):
     number_of_variants = len(variants)
     for variant in variants:
         print(f"Calculating fitness for variant {variant_counter+1}/{number_of_variants}")
-        translucent_alignment = align(variants[variant][0], trg)
+        translucent_alignment = align(variants[variant][0], trg, inverse_trg)
         sum_cost += translucent_alignment["cost"] * len(variants[variant][1])
         sum_bwc += translucent_alignment["bwc"] * len(variants[variant][1])
         variant_counter += 1
