@@ -22,7 +22,7 @@ from pm4py.algo.discovery.inductive.fall_through.abc import FallThrough
 from pm4py.objects.process_tree.obj import ProcessTree, Operator
 from pm4py.util.compression import util as comut
 from pm4py.util.compression.dtypes import UVCL
-from translucent_discovery.translucent_inductive_miner.translucent_datatype import TCL, get_start_activities_tcl, get_end_activities_tcl
+from translucent_discovery.translucent_inductive_miner.translucent_datatype import TCL, get_start_activities_tcl, get_end_activities_tcl, get_executed_activities
 
 
 class StrictTauLoopTranslucent(FallThrough[IMDataStructureTranslucent]):
@@ -80,4 +80,12 @@ class StrictTauLoopTranslucentTCL(FallThrough[IMDataStructureTranslucent]):
         log = obj.tcl
         proj = cls._get_projected_log(log)
         if sum(proj.values()) > sum(log.values()):
+            cls.avoid_double_self_loops(obj) # Avoid that self-loops are added twice in case of multiple loop iterations, as we do not want to trigger the base case again
             return ProcessTree(operator=Operator.LOOP), [IMDataStructureTranslucent(None, proj, frequent=False, parameters=parameters, self_loop_info=obj._translucent_self_loops), IMDataStructureTranslucent(None, Counter(), frequent=False, parameters=parameters, self_loop_info=obj._translucent_self_loops)]
+
+    @classmethod
+    def avoid_double_self_loops(cls, obj):
+        activities = get_executed_activities(obj.tcl)
+        if len(activities) == 1:
+            obj.translucent_self_loops[activities.pop()] = 0
+            
