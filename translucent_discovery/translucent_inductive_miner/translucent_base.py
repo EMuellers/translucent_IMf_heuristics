@@ -28,7 +28,7 @@ def discover_process_tree(log, parameters, noise_threshold):
         log = log_converter.apply(log, variant=log_converter.Variants.TO_EVENT_LOG)
     uvcl = comut.get_variants(comut.project_univariate(log, key=ack, df_glue=cidk, df_sorting_criterion_key=tk))
     tcl = translucent_log_to_tcl(log)
-    if noise_threshold == 0:
+    if noise_threshold is None: #Deprecated
         im = IM(parameters)
         temp = IMDataStructureTranslucent(uvcl, tcl, parameters=parameters)
         return im.apply(temp, parameters)
