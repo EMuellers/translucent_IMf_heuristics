@@ -128,6 +128,6 @@ def manipulate_log_optimized(df, addition_percentage):
     return updated_df
 
 if __name__ == "__main__":
-    df = pd.read_csv(r"C:\Users\elias\Desktop\Results_22.02\TranslucentActivityRelationships-main\new_eval\translucent_datasets\Sepsis\Sepsis_0.2.csv")
+    df = pd.read_csv(r"C:\Users\elias\Desktop\Results_22.02\TranslucentActivityRelationships-main\new_eval\translucent_datasets\hospital_billing\hospital_billing_0.2.csv")
     df_updated = manipulate_log_optimized(df, addition_percentage=0.2)
-    df_updated.to_csv(r"C:\Users\elias\Desktop\Results_22.02\TranslucentActivityRelationships-main\new_eval\translucent_datasets\Sepsis\Sepsis_0.2_add_events.csv", index=False)
+    df_updated.to_csv(r"C:\Users\elias\Desktop\Results_22.02\TranslucentActivityRelationships-main\new_eval\translucent_datasets\hospital_billing\hospital_billing_0.2_add_events.csv", index=False)
