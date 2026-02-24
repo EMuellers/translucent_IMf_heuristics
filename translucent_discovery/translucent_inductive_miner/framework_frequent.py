@@ -117,7 +117,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                                         filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, False, parameters=parameters)
                                         tree = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True, second_iteration_normal=True) # Try filtered DFG
                                         if tree is None:
-                                            if parameters["tDFG_fall_through"]: #TODO: Werden fallthroughs nicht sowieso auf dem log performed?
+                                            if parameters["tDFG_fall_through"]:
                                                 parameters["tDFG"] = True
                                             else:
                                                 parameters["tDFG"] = False
@@ -176,7 +176,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                                             parameters["tDFG"] = False
                                         ft = self.fall_through(obj, parameters)
                                         tree = self._recurse(ft[0], ft[1], parameters=parameters)
-            elif parameters["translucent_variant"] == "IMts": #TODO: Check both IMts and IMtf plus check notepad
+            elif parameters["translucent_variant"] == "IMts": 
                 if not second_iteration_translucent:
                     parameters["tDFG"] = False
                 cut = self.find_cut(obj, parameters) # performed on normal DFG, filtered DFG and filtered tDFG
