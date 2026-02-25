@@ -126,7 +126,7 @@ def add_enabled_information_to_nodes(graph: nx.MultiDiGraph) -> nx.MultiDiGraph:
 def get_automaton(log: EventLog, net, im, fm, alignments) -> nx.MultiDiGraph:
     return add_enabled_information_to_nodes(remove_wrong_sink_arcs(construct_automaton(log, net, im, fm, alignments)))
 
-def project_trace_on_model_alignment(trace, trace_alignment): #TODO: Check this! Should now be right
+def project_trace_on_model_alignment(trace, trace_alignment): # Elias: Should now be right
     # Only keeps events that have a matching move in the model alignment
     i = 0
     projected_trace = []
