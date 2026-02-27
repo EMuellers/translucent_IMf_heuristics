@@ -23,7 +23,7 @@ def construct_automaton(log: EventLog, net, im, fm, alignments, enabled_activiti
     sink_node = "sink_enabled"
     prefix_automaton.add_node(sink_node)
     """
-    variants = pm4py.statistics.variants.log.get.get_variants(log) #ToDo: Don't we need the translucent variants here?
+    variants = pm4py.statistics.variants.log.get.get_variants(log) 
     variant_log = EventLog(attributes=log.attributes, extensions=log.extensions, classifiers=log.classifiers,
                            omni_present=log.omni_present, properties=log.properties)
     for variant in variants:
