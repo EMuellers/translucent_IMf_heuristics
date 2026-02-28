@@ -360,15 +360,6 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
         for act in graph_tdfg:
             tdfg.graph[act] = graph_tdfg[act]
         
-        """
-        # apply filtering to end activities only if translucent
-        # TODO: Check if this is necessary
-        if translucent:
-            end_max_occ = max(end_activities.values())
-            end_activities = {x: y for x, y in end_activities.items()
-                 if y >= end_max_occ * noise_threshold
-            }
-        """
         # Return datastructure with filtered DFG and tDFG
         return IMDataStructureTranslucent(obj.data_structure, obj.tcl, dfg = dfg, tdfg = tdfg, frequent=True, parameters=parameters, self_loop_info = obj._translucent_self_loops) # Frequent set to true so that handed tdfg is kept
         
