@@ -34,7 +34,7 @@ def get_sorted_delta_arcs(delta_arcs, obj, criterion = "dependency_score"):
         case "exclusive_choice_frequency":
             return sorted(get_choice_relationships_frequent_tcl(obj.tcl, delta_arcs), key=lambda x: x[1], reverse=True)
         case "parallel_relationship_frequency":
-            return sorted(get_parallel_relationships_frequent_tcl(obj.tcl, delta_arcs), key=lambda x: x[1], reverse=True) # TODO: Check if sorting is correct!
+            return sorted(get_parallel_relationships_frequent_tcl(obj.tcl, delta_arcs), key=lambda x: x[1], reverse=True)
         case "confidence":
             return sorted(_calculate_confidence_scores(delta_arcs, obj), key=lambda x: x[1])
         case "support":
@@ -127,7 +127,7 @@ def get_choice_relationships_frequent_tcl(log: TCL, delta_arcs) -> dict:
                     activity_choice[(executed_activity, activity)] += number_of_occurrence
                     if (activity, executed_activity) not in activity_choice:
                         activity_choice[(activity, executed_activity)] = 0
-                    if activity != executed_activity: # Avoid counting self-choice relationships twice #TODO: Ask Harry if this is fine
+                    if activity != executed_activity: # Avoid counting self-choice relationships twice 
                         activity_choice[(activity, executed_activity)] += number_of_occurrence
     # filter only delta arcs
     activity_choice = {arc: freq for arc, freq in activity_choice.items() if arc in delta_arcs}
