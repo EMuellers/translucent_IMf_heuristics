@@ -99,12 +99,15 @@ def generate_log_with_noise(path_to_log, noise_threshold, alignment_parameters, 
     return annotated_log
     
 
-def generate_log_without_noise(path_to_log, noise_threshold, alignment_parameters, enabled_activities_name="enabled_activities"):
+def generate_log_without_noise(path_to_log, noise_threshold, alignment_parameters, enabled_activities_name="enabled_activities", pnml_path=None):
     log = pm4py.read_xes(path_to_log, return_legacy_log_object=True)
     # Clean the activity names for petrify to work correctly
     log = clean_activity_names(log)
     # First discover a ground truth model with the IMf
     net, im, fm = pm4py.discover_petri_net_inductive(log, noise_threshold=noise_threshold)
+    
+    if pnml_path is not None:
+        pm4py.write_pnml(net, im, fm, pnml_path)
     
     # Debug: Write the discovered model to a pnml file
     #pm4py.write_pnml(net, im, fm, r"C:\Users\elias\Masterarbeit_code\Spielplatz\Code_Harry\TranslucentActivityRelationships-main\new_eval\utils\petrify_nets\Sepsis_0.2.pnml")
