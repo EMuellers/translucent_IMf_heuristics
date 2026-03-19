@@ -367,7 +367,8 @@ def prettify_noise_type(noise_type: str) -> str:
         "add_enabled": "Add Enabled Activities",
         "add_events": "Add Events",
         "remove_enabled": "Remove Enabled Activities",
-        "change_events": "Change Events"
+        "change_events": "Change Events",
+        "add_events_no_trans": "Add Events"
     }
     return noise_map.get(noise_type, noise_type.replace("_", " ").title())
 
