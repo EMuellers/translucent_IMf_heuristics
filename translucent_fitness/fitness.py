@@ -1,4 +1,4 @@
-from translucent_fitness.translucent_reachability_graph_astar_gurobi import TranslucentReachabilityGraph
+from translucent_fitness.translucent_reachability_graph_rx import TranslucentReachabilityGraph
 from translucent_fitness.utils import get_translucent_trace_variants
 from translucent_fitness.translucent_alignment import align
 import networkx as nx
