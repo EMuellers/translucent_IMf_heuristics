@@ -80,7 +80,7 @@ class StrictTauLoopTranslucentTCL(FallThrough[IMDataStructureTranslucent]):
         log = obj.tcl
         proj = cls._get_projected_log(log)
         if sum(proj.values()) > sum(log.values()):
-            cls.avoid_double_self_loops(obj, parameters) # Avoid that self-loops are added twice in case of multiple loop iterations, as we do not want to trigger the base case again
+            #cls.avoid_double_self_loops(obj, parameters) # Avoid that self-loops are added twice in case of multiple loop iterations, as we do not want to trigger the base case again
             return ProcessTree(operator=Operator.LOOP), [IMDataStructureTranslucent(None, proj, frequent=False, parameters=parameters, self_loop_info=obj._translucent_self_loops), IMDataStructureTranslucent(None, Counter(), frequent=False, parameters=parameters, self_loop_info=obj._translucent_self_loops)]
 
     @classmethod

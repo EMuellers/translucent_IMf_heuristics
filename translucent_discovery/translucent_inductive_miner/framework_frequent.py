@@ -73,6 +73,21 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
             else:
                 obj = empty_traces[1][1]
 
+        if parameters.get("translucent_self_loops", False) and (parameters["translucent_variant"] == "IMtf" or second_iteration_translucent): # directly trigger on IMtf and only for IMts if it gets to tdfg
+            activities = self._get_executed_activities_uvcl(obj.data_structure)
+            if len(activities) == 1:
+                number_original_traces = sum(y for y in obj.data_structure.values())
+                if obj.translucent_self_loops[list(activities)[0]] > 0:
+                    act = list(activities)[0]
+                    obj.translucent_self_loops[list(activities)[0]] = 0
+                    trace_to_add = ((act, frozenset(act)), (act, frozenset(act)) )
+                    obj.tcl.update({trace_to_add: 1})
+                    ft = self.fall_through(obj, parameters)
+                    tree = self._recurse(ft[0], ft[1], parameters=parameters)
+                    return tree # self loop, return what the tau loop fallthrough would return
+                else:
+                    return ProcessTree(label=list(activities)[0]) # no self loop, return just the activity label   
+        
         tree = self.apply_base_cases(obj, parameters=parameters)
         if tree is None:
             # First tDFG, then filtered tDFG, then DFG, then filtered DFG
@@ -146,7 +161,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                                     parameters["tDFG"] = False
                                 ft = self.fall_through(obj, parameters)
                                 tree = self._recurse(ft[0], ft[1], parameters=parameters)
-            elif parameters["translucent_variant"] == "IMto":
+            elif parameters["translucent_variant"] == "IMto": # deprecated
                 parameters["tDFG"] = True
                 if tree is None:
                     cut = self.find_cut(obj, parameters)
@@ -371,11 +386,16 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
         cut = None
         if len(candidate_arcs) > 0:
             sorted_arcs = get_sorted_delta_arcs(candidate_arcs, obj, criterion=parameters["remove_arcs_heuristics"])
+            if parameters["remove_arcs_heuristics"] == "exclusive_choice_frequency":
+                existing_sorted_arcs = {x[0] for x in sorted_arcs}
+                missing_arcs = [(arc, 0) for arc in candidate_arcs if arc not in existing_sorted_arcs]
+                sorted_arcs.extend(missing_arcs)
             # Remove worst arcs one by one and try to find a cut
             for arc, score in sorted_arcs:
                 del obj.tdfg.graph[arc]
                 cut = self.find_cut(obj, parameters)
                 if cut is not None:
+                    #print("Arc removal heuristic hit")
                     return cut
         obj._tdfg = original_tdfg
         return cut
@@ -388,11 +408,24 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
         if len(candidate_arcs) > 0:
             sorted_arcs = get_sorted_delta_arcs(candidate_arcs, obj, criterion=parameters["add_arcs_heuristics"])
             sorted_arcs.reverse() # We want to add the best arcs first, function returns worst to best
+            if parameters["add_arcs_heuristics"] == "parallel_relationship_frequency":
+                existing_sorted_arcs = {x[0] for x in sorted_arcs}
+                missing_arcs = [(arc, 1) for arc in candidate_arcs if arc not in existing_sorted_arcs]
+                sorted_arcs.extend(missing_arcs)
             # Add best arcs one by one and try to find a cut
             for arc, score in sorted_arcs:
-                obj.dfg.graph.update({arc: obj.tdfg.graph[arc]}) #TODO: Check if this works correctly
+                obj.dfg.graph.update({arc: score})
                 cut = self.find_cut(obj, parameters)
                 if cut is not None:
+                    #print("Arc addition heuristic hit")
                     return cut
         obj._dfg = original_dfg
         return cut
+    
+    def _get_executed_activities_uvcl(self, uvcl):
+        unique_activities = set()
+
+        for variant in uvcl.keys():
+            unique_activities.update(variant)
+
+        return unique_activities

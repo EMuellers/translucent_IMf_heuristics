@@ -23,7 +23,7 @@ class IMDataStructureTranslucent(IMDataStructureLog[UVCL]):
         super().__init__(obj)
         self._translucent_self_loops = self_loop_info
         if parameters.get("translucent_self_loops", False) and self_loop_info is None:
-            self._translucent_self_loops = get_translucent_self_loops(tcl)
+            self._translucent_self_loops = get_translucent_self_loops(tcl, parameters["noise_threshold"])
         if dfg is None:
             self._dfg = comut.discover_dfg_uvcl(self._obj)
         else:
