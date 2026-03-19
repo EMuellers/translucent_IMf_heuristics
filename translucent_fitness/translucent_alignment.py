@@ -2,7 +2,7 @@ from pm4py import PetriNet, Marking
 from pm4py.objects.log.obj import Trace
 
 
-from translucent_fitness.translucent_reachability_graph_astar_gurobi import TranslucentReachabilityGraph, TranslucentAlignmentStateGraph
+from translucent_fitness.translucent_reachability_graph_rx import TranslucentReachabilityGraph, TranslucentAlignmentStateGraph
 
 
 
