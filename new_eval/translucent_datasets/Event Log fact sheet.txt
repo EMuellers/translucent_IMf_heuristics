@@ -1,0 +1,25 @@
+Event Log fact sheet (add_events=add_events_no_trans!)
+
+Sepsis:
+
+- Base: 508 Events, 106 Traces, 20 Variants, 20 Translucent Variants, 11 Event Types (activity types), min trace length: 3 , max trace length: 19 , avg. trace length: 4.79
+- add_events: 558 Events, 106 Traces, 52 Variants, 53 Translucent Variants, 11 Event Types (activity types), min trace length: 3 , max trace length: 21 , avg. trace length: 5.26
+- add_enabled: 508 Events, 106 Traces, 20 Variants, 40 Translucent Variants, 11 Event Types (activity types), min trace length: 3 , max trace length: 19 , avg. trace length: 4.79
+- remove_events: 458 Events, 106 Traces, 33 Variants, 34 Translucent Variants, 11 Event Types (activity types), min trace length: 1 , max trace length: 17 , avg. trace length: 4.32 
+- remove_enabled: 490 Events, 106 Traces, 29 Variants, 43 Translucent Variants, 11 Event Types (activity types), min trace length: 1 , max trace length: 19 , avg. trace length: 4.62
+
+Road Traffic Fine:
+
+- Base: 320375 Events, 97236 Traces, 46 Variants, 76 Translucent Variants, 11 Event Types (activity types), min trace length: 2 , max trace length: 20 , avg. trace length: 3.29
+- add_events: 352412 Events, 97236 Traces, 2669 Variants, 3466 Translucent Variants, 11 Event Types (activity types), min trace length: 2 , max trace length: 24 , avg. trace length: 3.62
+- add_enabled: 320375 Events, 97236 Traces, 46 Variants, 2322 Translucent Variants, 11 Event Types (activity types), min trace length: 2 , max trace length: 20 , avg. trace length: 3.29
+- remove_events: 288338 Events, 96693 Traces, 184 Variants, 320 Translucent Variants, 11 Event Types (activity types), min trace length: 1 , max trace length: 16 , avg. trace length: 2.98 
+- remove_enabled: 298592 Events, 96730 Traces, 166 Variants, 883 Translucent Variants, 11 Event Types (activity types), min trace length: 1 , max trace length: 20 , avg. trace length: 3.09
+
+Hospital Billing:
+
+- Base: 394700 Events, 92507 Traces, 250 Variants, 319 Translucent Variants, 14 Event Types (activity types), min trace length: 1 , max trace length: 27 , avg. trace length: 4.27
+- add_events: 434170 Events, 92507 Traces, 6638 Variants, 7393 Translucent Variants, 14 Event Types (activity types), min trace length: 1 , max trace length: 31 , avg. trace length: 4.69
+- add_enabled: 394700 Events, 92507 Traces, 250 Variants, 4565 Translucent Variants, 14 Event Types (activity types), min trace length: 1 , max trace length: 27  , avg. trace length: 4.27
+- remove_events: 355230 Events, 90086 Traces, 1121 Variants, 1406 Translucent Variants, 14 Event Types (activity types), min trace length: 1 , max trace length: 23 , avg. trace length: 3.94 
+- remove_enabled: 377851 Events, 90136 Traces, 654 Variants, 3270 Translucent Variants, 14 Event Types (activity types), min trace length: 1 , max trace length: 25 , avg. trace length: 4.19
