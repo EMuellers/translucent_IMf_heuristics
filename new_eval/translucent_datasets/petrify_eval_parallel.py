@@ -38,7 +38,7 @@ LOG_NAMES = ["Sepsis", "hospital_billing", "road_traffic_fine"]
 
 TIMEOUT = 7200  # seconds per individual metric computation
 N_CPUS = mp.cpu_count()
-N_WORKERS = N_CPUS // 2 + 3
+N_WORKERS = N_CPUS // 2 + 2
 
 # ---------------------------------------------------------------------------
 # Error file helper
@@ -137,6 +137,9 @@ def evaluate_single_noise_type(log, log_name: str, noise_label: str) -> dict:
             "f_1_score": 0, "translucent_f_1_score": 0,
             "simplicity": 0, "failed": True,
         }
+    pnml_folder = Path(f"new_eval/translucent_datasets/{log_name}/pnml/petrify/{noise_label}")
+    pnml_folder.mkdir(parents=True, exist_ok=True)
+    pm4py.write_pnml(net, im, fm, f"new_eval/translucent_datasets/{log_name}/pnml/petrify/{noise_label}/petrify.pnml")
 
     # --- fitness_alignments -----------------------------------------------
     _fit = Value("d", -1.0)

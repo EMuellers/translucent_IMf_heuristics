@@ -32,12 +32,12 @@ warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 constants.DEFAULT_LP_SOLVER = "gurobi"
 
 LOG_NAMES = [
-    "Sepsis", "hospital_billing"
+    "Sepsis", "hospital_billing", "road_traffic_fine"
 ]
 
 TIMEOUT = 7200      # seconds per individual metric computation
 N_CPUS = mp.cpu_count()
-N_WORKERS = N_CPUS // 2 + 3
+N_WORKERS = N_CPUS // 2 + 4
 
 
 
@@ -335,8 +335,6 @@ def _build_task_list(log_names, noise_types, log_map, parameter_configs, filter_
     tasks = []
     for log_name in log_names:
         for noise_type in noise_types:
-            if log_name == "road_traffic_fine" and not noise_type:
-                continue  #! already evaluated
             noise_label = noise_type if noise_type else "base"
             log = log_map[(log_name, noise_label)]
             for config in parameter_configs:
@@ -484,7 +482,7 @@ def run_evaluation(log_names, noise_types, path_to_log_fn, filter_values, parame
 if __name__ == "__main__":
     noise_types = [False, "remove_enabled"]
 
-    filter_values = [0, 0.2, 0.4, 0.6, 0.8, 1.0]
+    filter_values = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
     parameter_configs = generate_minor_heuristics_parameter_configs()  # TODO: Change for full eval!
 
