@@ -163,21 +163,24 @@ def discover_frequent_dfg_tcl(log: TCL, subtract_xor=True, parameters={}, self_l
     for act in start_activities:
         dfg.start_activities.update(({act: start_activities[act]}))
     end_activities = get_end_activities_frequent_tcl(log, executed_activities, strict_end_activities=parameters.get("strict_end_activities", False))
-    # Heuristic: If two activities are in translucent parallel relation and one is an end activity, the other is also considered an end activity
-    if parameters.get("parallel_end_activities_heuristic", False):
-        added_parallel_arcs = set()
-        for (source, target) in parallel:
-            count = parallel[(source, target)]
-            if subtract_xor:
-                xor_count = 0
-                if (source, target) in xor:
-                    xor_count = xor[(source, target)]
-                if count-xor_count > 0:
-                    dfg.graph.update({(source, target): count-xor_count})
-                    added_parallel_arcs.add((source, target))
-            else:
-                dfg.graph.update({(source, target): count})
+    
+    added_parallel_arcs = set()
+    for (source, target) in parallel:
+        count = parallel[(source, target)]
+        if subtract_xor:
+            xor_count = 0
+            if (source, target) in xor:
+                xor_count = xor[(source, target)]
+            if count-xor_count > 0:
+                #dfg.graph.update({(source, target): count-xor_count})
+                dfg.graph[(source, target)] = max(dfg.graph[(source, target)], count - xor_count)
                 added_parallel_arcs.add((source, target))
+        else:
+            #dfg.graph.update({(source, target): count})
+            dfg.graph[(source, target)] = max(dfg.graph[(source, target)], count)
+            added_parallel_arcs.add((source, target))
+            # Heuristic: If two activities are in translucent parallel relation and one is an end activity, the other is also considered an end activity
+    if parameters.get("parallel_end_activities_heuristic", False):
         for (source, target) in added_parallel_arcs:
             if source != target: # Exclude self-loops
                 if source in end_activities and target not in end_activities:
