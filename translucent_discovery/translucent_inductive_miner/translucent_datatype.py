@@ -63,15 +63,35 @@ def get_executed_activity_frequencies_tcl(tcl: TCL) -> Counter[str]:
             activity_frequencies[event[0]] += count
     return activity_frequencies
 
-def get_translucent_self_loops(tcl: TCL) -> set[str]:
+def get_translucent_self_loops_old(tcl: TCL) -> set[str]:
     excecuted_activities = get_executed_activities(tcl)
     loop_dict = {activity: 0 for activity in excecuted_activities}
     for variant, count in tcl.items():
         for i in range(len(variant) - 1):
             current_event = variant[i]
             next_event = variant[i + 1]
-            if current_event[0] != next_event[0] and current_event[0] in next_event[1]: # count only translucent self-loops (enabled in next event but not executed)
+            #if current_event[0] != next_event[0] and current_event[0] in next_event[1]: # count only translucent self-loops (enabled in next event but not executed)
+            if current_event[0] in next_event[1]:
                 loop_dict[current_event[0]] += count
+    return loop_dict
+
+def get_translucent_self_loops(tcl: TCL, threshold: float) -> set[str]:
+    excecuted_activities_frequencies = get_executed_activity_frequencies_tcl(tcl)
+    loop_dict = {activity: 0 for activity in excecuted_activities_frequencies.keys()}
+    for variant, count in tcl.items():
+        for i in range(len(variant) - 1):
+            current_event = variant[i]
+            next_event = variant[i + 1]
+            #if current_event[0] != next_event[0] and current_event[0] in next_event[1]: # count only translucent self-loops (enabled in next event but not executed)
+            if current_event[0] in next_event[1]:
+                loop_dict[current_event[0]] += count
+    end_frequencies = get_end_activities_tcl(tcl)
+    excecuted_activities_frequencies -= end_frequencies
+    for activity in loop_dict.keys():
+        if loop_dict[activity] > excecuted_activities_frequencies[activity] * threshold:
+            loop_dict[activity] = 1
+        else:
+            loop_dict[activity] = 0
     return loop_dict
 
 if __name__ == "__main__":

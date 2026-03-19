@@ -32,9 +32,9 @@ def get_sorted_delta_arcs(delta_arcs, obj, criterion = "dependency_score"):
         case "dependency_score":
             return sorted(_calculate_dependency_scores(delta_arcs, obj), key=lambda x: x[1])
         case "exclusive_choice_frequency":
-            return sorted(get_choice_relationships_frequent_tcl(obj.tcl, delta_arcs), key=lambda x: x[1], reverse=True)
+            return sorted(get_choice_relationships_frequent_tcl(obj.tcl, delta_arcs).items(), key=lambda x: x[1], reverse=True)
         case "parallel_relationship_frequency":
-            return sorted(get_parallel_relationships_frequent_tcl(obj.tcl, delta_arcs), key=lambda x: x[1], reverse=True)
+            return sorted(get_parallel_relationships_frequent_tcl(obj.tcl, delta_arcs).items(), key=lambda x: x[1], reverse=False)
         case "confidence":
             return sorted(_calculate_confidence_scores(delta_arcs, obj), key=lambda x: x[1])
         case "support":
@@ -151,7 +151,8 @@ def _calculate_support_scores(delta_arcs, obj):
         score = translucent_dfr.get(arc, 0) # Some arcs in the tdfg only exist because of parallel relationship, so they might not have a translucent directly follows frequency. Using get here avoids this issue
         yield (arc, score)
 
-def get_parallel_relationships_frequent_tcl(log: TCL, executed_activities) -> dict:
+def get_parallel_relationships_frequent_tcl(log: TCL, delta_arcs) -> dict:
+    executed_activities = {act for arc in delta_arcs for act in arc}
     activity_parallel = {}
     for trace in log:
         number_of_occurrence = log[trace]
@@ -168,4 +169,6 @@ def get_parallel_relationships_frequent_tcl(log: TCL, executed_activities) -> di
                     if (activity, executed_activity) not in activity_parallel:
                         activity_parallel[(activity, executed_activity)] = 0
                     activity_parallel[(activity, executed_activity)] += number_of_occurrence
+    # Filter only delta arcs
+    activity_parallel = {arc: freq for arc, freq in activity_parallel.items() if arc in delta_arcs}
     return activity_parallel
