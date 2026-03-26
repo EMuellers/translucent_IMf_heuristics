@@ -64,7 +64,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
         noise_threshold = parameters["noise_threshold"]
 
         empty_traces = EmptyTracesTranslucent.apply(obj, parameters=parameters)
-        if empty_traces is not None:
+        if empty_traces is not None and empty_traces[1]:
             number_original_traces = sum(y for y in obj.data_structure.values())
             number_filtered_traces = sum(y for y in empty_traces[1][1].data_structure.values())
 

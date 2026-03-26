@@ -27,17 +27,20 @@ class SingleActivityBaseCaseTranslucent(BaseCase[IMDataStructureTranslucent]):
             return False
         if len(list(obj.data_structure.keys())[0]) > 1:
             return False
-        
+        """
         if parameters.get("translucent_self_loops", False) and obj.translucent_self_loops[list(obj.data_structure.keys())[0][0]] > 0 and parameters["translucent_variant"] == "IMtf":
             trace_to_append = {(list(obj.data_structure.keys())[0][0], list(obj.data_structure.keys())[0][0]): 1}
             obj.data_structure.update(trace_to_append)
             #obj.dfg.graph.update(trace_to_append) # Need to update DFG to not trigger a sequence cut. HOWEVER: not needed in implementation as we rebuild the DFG later anyways...
             obj.translucent_self_loops[list(obj.data_structure.keys())[0][0]] = 0 # set self-loop count to 0 so that base case is not triggered again
             return False
-        
+        """
         return True
 
     @classmethod
     def leaf(cls, obj=IMDataStructureTranslucent, parameters: Optional[Dict[str, Any]] = None) -> ProcessTree:
         for t in obj.data_structure:
-            return ProcessTree(label=t[0])
+            if t:
+                return ProcessTree(label=t[0])
+            else:
+                return ProcessTree()

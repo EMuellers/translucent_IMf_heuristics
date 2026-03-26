@@ -30,8 +30,11 @@ class EmptyTracesTranslucent(FallThrough[IMDataStructureTranslucent]):
         if cls.holds(obj, parameters):
             data_structure = copy(obj.tcl)
             del data_structure[()]
-            return ProcessTree(operator=Operator.XOR), [IMDataStructureTranslucent(Counter(), Counter(), frequent=False, parameters=parameters, self_loop_info=obj._translucent_self_loops),
-                                                        IMDataStructureTranslucent(None, data_structure, frequent=False, parameters=parameters, self_loop_info=obj._translucent_self_loops)]
+            if data_structure:
+                return ProcessTree(operator=Operator.XOR), [IMDataStructureTranslucent(Counter(), Counter(), frequent=False, parameters=parameters, self_loop_info=obj._translucent_self_loops),
+                                                            IMDataStructureTranslucent(None, data_structure, frequent=False, parameters=parameters, self_loop_info=obj._translucent_self_loops)]
+            else:
+                return ProcessTree(), []
         else:
             return None
 
