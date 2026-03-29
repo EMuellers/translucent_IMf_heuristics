@@ -1,20 +1,31 @@
-# Translucent Activity Relationships
-In this repository, we provide the code for our translucent discovery algorithm as well as the code for our precision method.
-We also point out how we evaluated our method. We assume that enabled activities are provided with the attribute/column name: "enabled_activities".
-For further information, and the data we used, we refer to our evaluation folder. 
-## Create Translucent Event Logs from Existing Event Logs   
-To create a translucent event log from an existing log, the following steps are necessary.
-    
-    import pm4py
-    from synthetical_log_generation.log_generator import create_translucent_event_log
-    from pm4py.objects.conversion.log import converter as log_converter
+# Heuristically Altering translucent Directly Follows Graphs
+Here we provide the code for our thesis "". This work extends the translucent Inductive Miner-infrequent by Beyel et al.
+We only extended the IMtf and IMts variants.
+A variant can be chosen by setting the `translucent_variant` parameter in the parameters dict to either "IMtf" or "IMts"
+To use the different heuristics, they should be provided as parameters to the algorithm. By default, all heuristics are considered to be off.
+Here is an overview of the heuristics and which parameter needs to be set to use them:
 
-    initial_log = pm4py.read_xes('example.xes')
-    initial_log = log_converter.apply(initial_log, variant=log_converter.Variants.TO_EVENT_LOG)
-    net, initial_marking, final_marking = pm4py.discover_petri_net_inductive(initial_log, noise_threshold=0.4)
-    translucent_log = create_translucent_event_log(initial_log, net, initial_marking, final_marking)
-    dataframe = pm4py.convert_to_dataframe(translucent_log)
-    dataframe.to_csv('example_translucent.csv', sep=",", index=False)
+## Delta Arc Heuristics
+        
+"remove_arcs_heuristics":   Remove arcs exclusive to tDFG before applying fall throughs, set to "False" (default) to disable. Possible values:     
+                                # "dependency_score",  uses the dependency score metric to rank arcs
+                                # "exclusive_choice_frequency" to use the choice frequency for ranking
+                                # 'confidence' to use confidence of translucent df relation for ranking
+                                # 'support' to use support of translucent df relation for ranking
+
+"add_arcs_heuristics":      Add arcs from the tDFG to the DFG before applying fall throughs, set to "False" (default) to disable. Possible values:
+                                # "support", # "dependency_score"
+                                # "parallel_relationship_frequency" to use the choice frequency for ranking
+                                # 'confidence' to use confidence of translucent df relation for ranking
+                                # 'support' to use support of translucent df relation for ranking
+
+## Single Activity Heuristics
+
+"strict_end_activities": Either False or True, # Only consider translucent end activities which actually appear at the end of a trace at least once
+
+"parallel_end_activities_heuristic": Either False or True, # If two activities are in translucent parallel relation and one is an end activity, the other is also considered an end activity in the (frequent) tDFG
+
+"translucent_self_loops": Either False or True # Keep translucent self loops when projecting onto single activities, by projecting these on traces where activities follow themselves directly.
 
 ## Discover Process Models from Translucent Event Logs
 To discover process models, based on translucent event logs, the following steps are needed.
@@ -29,7 +40,7 @@ To discover process models, based on translucent event logs, the following steps
     model, i_m, f_m = discover_petri_net(log, {"translucent_variant": "IMts"})
 
 Note that there are different parameters for `translucent_variant` possible. In particular, the following: 
-`IM`, `IMto`, `IMtf`, and `IMts`.
+`IMtf`, and `IMts`.
 
 Other newly added parameters concern noise filtering and which graph to use when applying fall-throughs.
 
