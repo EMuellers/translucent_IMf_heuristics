@@ -326,7 +326,7 @@ def get_choice_relationships_frequent_tcl(log: TCL, executed_activities) -> dict
                     activity_choice[(executed_activity, activity)] += number_of_occurrence
                     if (activity, executed_activity) not in activity_choice:
                         activity_choice[(activity, executed_activity)] = 0
-                    if activity != executed_activity: # Avoid counting self-choice relationships twice #TODO: Ask Harry if this is fine
+                    if activity != executed_activity: # Avoid counting self-choice relationships twice
                         activity_choice[(activity, executed_activity)] += number_of_occurrence
     return activity_choice
 
