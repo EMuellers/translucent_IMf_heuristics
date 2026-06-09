@@ -264,7 +264,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
             if act in end_activities:
                 outgoing_max_occ[act] = max(outgoing_max_occ[act], end_activities[act])
         dfg_list = sorted([(x, y) for x, y in dfg.items()], key=lambda x: (x[1], x[0]), reverse=True)
-        dfg_list = [x for x in dfg_list if x[1] > noise_threshold * outgoing_max_occ[x[0][0]]]
+        dfg_list = [x for x in dfg_list if x[1] >= noise_threshold * outgoing_max_occ[x[0][0]]]
         dfg_list = [x[0] for x in dfg_list]
         # filter the elements in the DFG
         graph = {x: y for x, y in dfg.items() if x in dfg_list}
@@ -274,6 +274,18 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
         start_activities = {x: y for x, y in start_activities.items()
              if y >= start_max_occ * noise_threshold
         }
+        
+        # apply filtering to end activities
+        delete_list = []
+        for act in end_activities:
+            if act in outgoing_max_occ:
+                max_occ = outgoing_max_occ[act]
+            else:
+                max_occ = end_activities[act]
+            if end_activities[act] < max_occ * noise_threshold:
+                delete_list.append(act)
+        for act in delete_list:
+            del end_activities[act]
         
         dfg = DFG()
         for sa in start_activities:
@@ -300,7 +312,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
             if act in end_activities_tdfg:
                 outgoing_max_occ_tdfg[act] = max(outgoing_max_occ_tdfg[act], end_activities_tdfg[act])
         tdfg_list = sorted([(x, y) for x, y in tdfg.items()], key=lambda x: (x[1], x[0]), reverse=True)
-        tdfg_list = [x for x in tdfg_list if x[1] > noise_threshold * outgoing_max_occ_tdfg[x[0][0]]]
+        tdfg_list = [x for x in tdfg_list if x[1] >= noise_threshold * outgoing_max_occ_tdfg[x[0][0]]]
         tdfg_list = [x[0] for x in tdfg_list]
         # filter the elements in the DFG
         graph_tdfg = {x: y for x, y in tdfg.items() if x in tdfg_list}
@@ -310,6 +322,18 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
         start_activities_tdfg = {x: y for x, y in start_activities_tdfg.items()
              if y >= start_max_occ_tdfg * noise_threshold
         }
+        
+        # apply filtering to end activities
+        delete_list = []
+        for act in end_activities_tdfg:
+            if act in outgoing_max_occ_tdfg:
+                max_occ = outgoing_max_occ_tdfg[act]
+            else:
+                max_occ = end_activities_tdfg[act]
+            if end_activities_tdfg[act] < max_occ * noise_threshold:
+                delete_list.append(act)
+        for act in delete_list:
+            del end_activities_tdfg[act]
         
         tdfg = DFG()
         for sa in start_activities_tdfg:
