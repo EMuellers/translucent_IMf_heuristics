@@ -27,18 +27,19 @@ def get_delta_arcs(tDFG: DFG, DFG: DFG) -> set[tuple[str, str]]:
 def get_sorted_delta_arcs(delta_arcs, obj, criterion = "dependency_score"):
     """
     Returns the delta arcs sorted according to the given criterion. The list is sorted in ascending order (worst to best) regarding the specified criterion.
+    Ties are broken by lexicographical order of the arcs
     """
     match criterion:
         case "dependency_score":
-            return sorted(_calculate_dependency_scores(delta_arcs, obj), key=lambda x: x[1])
+            return sorted(_calculate_dependency_scores(delta_arcs, obj), key=lambda x: (x[1], x[0][0], x[0][1]))
         case "exclusive_choice_frequency":
-            return sorted(get_choice_relationships_frequent_tcl(obj.tcl, delta_arcs).items(), key=lambda x: x[1], reverse=True)
+            return sorted(get_choice_relationships_frequent_tcl(obj.tcl, delta_arcs).items(), key=lambda x: (x[1], x[0][0], x[0][1]), reverse=True)
         case "parallel_relationship_frequency":
-            return sorted(get_parallel_relationships_frequent_tcl(obj.tcl, delta_arcs).items(), key=lambda x: x[1], reverse=False)
+            return sorted(get_parallel_relationships_frequent_tcl(obj.tcl, delta_arcs).items(), key=lambda x: (x[1], x[0][0], x[0][1]), reverse=False)
         case "confidence":
-            return sorted(_calculate_confidence_scores(delta_arcs, obj), key=lambda x: x[1])
+            return sorted(_calculate_confidence_scores(delta_arcs, obj), key=lambda x: (x[1], x[0][0], x[0][1]))
         case "support":
-            return sorted(_calculate_support_scores(delta_arcs, obj), key=lambda x: x[1])
+            return sorted(_calculate_support_scores(delta_arcs, obj), key=lambda x: (x[1], x[0][0], x[0][1]))
         case _:
             raise NotImplementedError(f"Sorting criterion {criterion} not implemented.")
     
