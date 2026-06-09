@@ -163,9 +163,12 @@ cython_debug/
 
 logs/
 
-.csv
-
-.pdf
+*.csv
+*.png
+*.pnml
+*.pdf
+*.xes
+*.g
 requirements.txt
 evaluation/artificial/artificial_log_result_5.pdf
 evaluation/artificial/artificial_log_result_10.pdf
@@ -908,3 +911,4 @@ new_eval/utils/petrify_nets/
 GEMINI.md
 precision_plot_both.png
 fitness_plot_both.png
+new_eval/translucent_datasets/Sepsis/results/translucent_delta/remove_enabled/IMf_results_translucent_self_loops_False_strict_end_activities_True_parallel_end_activities_heuristic_False_remove_arcs_heuristics_support_add_arcs_heuristics_confidence.csv
