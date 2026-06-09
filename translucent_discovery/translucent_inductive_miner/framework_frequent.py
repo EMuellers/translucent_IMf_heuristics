@@ -62,7 +62,6 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
 
     def apply(self, obj: T, parameters: Optional[Dict[str, Any]] = None, second_iteration_translucent=False, second_iteration_normal = False) -> ProcessTree:
         noise_threshold = parameters["noise_threshold"]
-
         empty_traces = EmptyTracesTranslucent.apply(obj, parameters=parameters)
         if empty_traces is not None and empty_traces[1]:
             number_original_traces = sum(y for y in obj.data_structure.values())
@@ -86,8 +85,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                     tree = self._recurse(ft[0], ft[1], parameters=parameters)
                     return tree # self loop, return what the tau loop fallthrough would return
                 else:
-                    return ProcessTree(label=list(activities)[0]) # no self loop, return just the activity label   
-        
+                    return ProcessTree(label=list(activities)[0]) # no self loop, return just the activity label
         tree = self.apply_base_cases(obj, parameters=parameters)
         if tree is None:
             # First tDFG, then filtered tDFG, then DFG, then filtered DFG
@@ -251,60 +249,6 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
     def instance(self) -> IMInstance:
         pass
     
-    """
-    #TODO: Shouldn't dfg and tdfg be filtered here? -> Yes!
-    def __filter_dfg_noise(self, obj, noise_threshold, translucent, parameters={}):
-        if translucent:
-            start_activities = copy(obj.tdfg.start_activities)
-            end_activities = copy(obj.tdfg.end_activities)
-            dfg = copy(obj.tdfg.graph)
-        else:
-            start_activities = copy(obj.dfg.start_activities)
-            end_activities = copy(obj.dfg.end_activities)
-            dfg = copy(obj.dfg.graph)
-        outgoing_max_occ = {}
-        for x, y in dfg.items():
-            act = x[0]
-            if act not in outgoing_max_occ:
-                outgoing_max_occ[act] = y
-            else:
-                outgoing_max_occ[act] = max(y, outgoing_max_occ[act])
-            if act in end_activities:
-                outgoing_max_occ[act] = max(outgoing_max_occ[act], end_activities[act])
-        dfg_list = sorted([(x, y) for x, y in dfg.items()], key=lambda x: (x[1], x[0]), reverse=True)
-        dfg_list = [x for x in dfg_list if x[1] > noise_threshold * outgoing_max_occ[x[0][0]]]
-        dfg_list = [x[0] for x in dfg_list]
-        # filter the elements in the DFG
-        graph = {x: y for x, y in dfg.items() if x in dfg_list}
-        
-        # apply filtering to start activities
-        start_max_occ = max(start_activities.values())
-        start_activities = {x: y for x, y in start_activities.items()
-             if y >= start_max_occ * noise_threshold
-        }
-        
-        # apply filtering to end activities only if translucent
-        # TODO: Check if this is necessary
-        if translucent:
-            end_max_occ = max(end_activities.values())
-            end_activities = {x: y for x, y in end_activities.items()
-                 if y >= end_max_occ * noise_threshold
-            }
-        
-        dfg = DFG()
-        for sa in start_activities:
-            dfg.start_activities[sa] = start_activities[sa]
-        for ea in end_activities:
-            dfg.end_activities[ea] = end_activities[ea]
-        for act in graph:
-            dfg.graph[act] = graph[act]
-
-        # Fix: Hand over the correct (t)dfg, frequent flag and parameters
-        if translucent:
-            return IMDataStructureTranslucent(obj.data_structure, obj.tcl, tdfg = dfg, frequent=obj.frequent, parameters=parameters, self_loop_info = obj._translucent_self_loops)
-        else:
-            return IMDataStructureTranslucent(obj.data_structure, obj.tcl, dfg = dfg, frequent=obj.frequent, parameters=parameters, self_loop_info = obj._translucent_self_loops)
-    """
     def __filter_dfg_noise(self, obj, noise_threshold, translucent, parameters={}):
         # First filter the DFG
         start_activities = copy(obj.dfg.start_activities)
@@ -389,6 +333,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
             if parameters["remove_arcs_heuristics"] == "exclusive_choice_frequency":
                 existing_sorted_arcs = {x[0] for x in sorted_arcs}
                 missing_arcs = [(arc, 0) for arc in candidate_arcs if arc not in existing_sorted_arcs]
+                missing_arcs = sorted(missing_arcs, key=lambda x: (x[0][0], x[0][1]), reverse=True) # sort missing arcs lexicographically
                 sorted_arcs.extend(missing_arcs)
             # Remove worst arcs one by one and try to find a cut
             for arc, score in sorted_arcs:
@@ -411,6 +356,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
             if parameters["add_arcs_heuristics"] == "parallel_relationship_frequency":
                 existing_sorted_arcs = {x[0] for x in sorted_arcs}
                 missing_arcs = [(arc, 1) for arc in candidate_arcs if arc not in existing_sorted_arcs]
+                missing_arcs = sorted(missing_arcs, key=lambda x: (x[0][0], x[0][1])) # sort missing arcs lexicographically
                 sorted_arcs.extend(missing_arcs)
             # Add best arcs one by one and try to find a cut
             for arc, score in sorted_arcs:
