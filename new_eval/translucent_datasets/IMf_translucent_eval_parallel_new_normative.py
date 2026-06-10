@@ -11,7 +11,7 @@ import sys
 import traceback
 
 if os.name != 'nt':
-    sys.path.append("/home/eliasmullers/Desktop/thesis/TranslucentActivityRelationships-main")
+    sys.path.append("/home/eliasmullers/Desktop/thesis/eval_fall")
 else:
     sys.path.append(
         "C:\\Users\\elias\\Masterarbeit_code\\Spielplatz\\Code_Harry\\"
@@ -30,14 +30,14 @@ from pandas.errors import SettingWithCopyWarning
 warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 
 constants.DEFAULT_LP_SOLVER = "gurobi"
-
+#[Sepsis, road_traffic_fine, hospital_billing]
 LOG_NAMES = [
-    "Sepsis", "hospital_billing", "road_traffic_fine"
+    "Sepsis", "road_traffic_fine", "hospital_billing"
 ]
 
 TIMEOUT = 7200      # seconds per individual metric computation
 N_CPUS = mp.cpu_count()
-N_WORKERS = N_CPUS // 2 + 4
+N_WORKERS = 10
 
 
 
@@ -64,13 +64,11 @@ def _write_error_file(context: str, exc: BaseException) -> None:
 
 def generate_parameter_configs():
     parameter_list = []
-    translucent_self_loops = [True, False]
-    strict_end_activities = [True, False]
-    parallel_end_activities_heuristic = [True, False]
-    remove_arcs_heuristic = [False, "dependency_score", "support", "confidence",
-                             "exclusive_choice_frequency"]
-    add_arcs_heuristic = [False, "dependency_score", "support", "confidence",
-                          "parallel_relationship_frequency"]
+    translucent_self_loops = [False]
+    strict_end_activities = [True]
+    parallel_end_activities_heuristic = [False]
+    remove_arcs_heuristic = ["support"]
+    add_arcs_heuristic = ["parallel_relationship_frequency"]
     for self_loops in translucent_self_loops:
         for strict_end in strict_end_activities:
             for parallel_heuristic in parallel_end_activities_heuristic:
@@ -170,7 +168,7 @@ def _run_returning_pair_in_process(target, args) -> tuple | None:
 
 def _pnml_path(log_name: str, noise_label: str, config: dict, variant: str, f: float) -> Path:
     folder = Path(
-        f"new_eval/translucent_datasets/{log_name}/pnml/{noise_label}/"
+        f"new_eval/translucent_datasets/{log_name}/pnml/translucent_delta/{noise_label}/"
         f"{prettify_config_for_file_name(config)}"
     )
     folder.mkdir(parents=True, exist_ok=True)
@@ -195,7 +193,7 @@ def evaluate_single_filter(f: float, log, log_name: str, noise_type: str, parame
 
     # --- Discovery --------------------------------------------------------
     start = time.time()
-    net_tf, im_tf, fm_tf = discover_petri_net(
+    net_tf, im_tf, fm_tf, fallthrough_count_tf = discover_petri_net(
         log,
         {"translucent_variant": "IMtf", "tDFG_fall_through": True} | parameters,
         noise_threshold=f,
@@ -203,7 +201,7 @@ def evaluate_single_filter(f: float, log, log_name: str, noise_type: str, parame
     duration_tf = time.time() - start
 
     start = time.time()
-    net_ts, im_ts, fm_ts = discover_petri_net(
+    net_ts, im_ts, fm_ts, fallthrough_count_ts = discover_petri_net(
         log,
         {"translucent_variant": "IMts", "tDFG_fall_through": False} | parameters,
         noise_threshold=f,
@@ -300,6 +298,8 @@ def evaluate_single_filter(f: float, log, log_name: str, noise_type: str, parame
         "translucent_f_1_score_ts": translucent_f_1_score_ts,
         "simplicity_tf": simplicity_tf,
         "simplicity_ts": simplicity_ts,
+        "fallthrough_count_tf": fallthrough_count_tf,
+        "fallthrough_count_ts": fallthrough_count_ts,
         "failed": False,
     }
 
@@ -422,7 +422,7 @@ def run_evaluation(log_names, noise_types, path_to_log_fn, filter_values, parame
             for config in parameter_configs:
                 key = (log_name, noise_label, prettify_config_for_file_name(config))
                 results_folder = Path(
-                    f"new_eval/translucent_datasets/{log_name}/results/translucent/{noise_label}"
+                    f"new_eval/translucent_datasets/{log_name}/results/translucent/{noise_label}" #FILE PATH CHANGE FOR DELTA
                 )
                 results_folder.mkdir(parents=True, exist_ok=True)
                 results_path = results_folder / f"IMf_results_{prettify_config_for_file_name(config)}.csv"
@@ -480,11 +480,12 @@ def run_evaluation(log_names, noise_types, path_to_log_fn, filter_values, parame
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    noise_types = [False, "remove_enabled"]
+    #noise_types = [False, "remove_enabled", "remove_events", "add_enabled", "add_events_no_trans"]
+    noise_types = [False, "remove_enabled", "remove_events"]
 
     filter_values = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-
-    parameter_configs = generate_minor_heuristics_parameter_configs()  # TODO: Change for full eval!
+    parameter_configs = generate_minor_heuristics_parameter_configs()
+    #parameter_configs = parameter_configs[8:]
 
     def path_to_log_fn(log_name: str) -> Path:
         if os.name == "nt":

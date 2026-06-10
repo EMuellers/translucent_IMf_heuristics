@@ -184,7 +184,7 @@ def evaluate_single_filter(f: float, train_log, test_log,
 
     # --- Discovery (on train split) ---------------------------------------
     start = time.time()
-    net_tf, im_tf, fm_tf = discover_petri_net(
+    net_tf, im_tf, fm_tf, fallthrough_count_tf = discover_petri_net(
         train_log,
         {"translucent_variant": "IMtf", "tDFG_fall_through": True} | parameters,
         noise_threshold=f,
@@ -192,7 +192,7 @@ def evaluate_single_filter(f: float, train_log, test_log,
     duration_tf = time.time() - start
 
     start = time.time()
-    net_ts, im_ts, fm_ts = discover_petri_net(
+    net_ts, im_ts, fm_ts, fallthrough_count_ts = discover_petri_net(
         train_log,
         {"translucent_variant": "IMts", "tDFG_fall_through": False} | parameters,
         noise_threshold=f,
