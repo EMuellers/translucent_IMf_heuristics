@@ -16,7 +16,7 @@ import sys
 import traceback
 
 if os.name != 'nt':
-    sys.path.append("/home/eliasmullers/Desktop/thesis/TranslucentActivityRelationships-main")
+    sys.path.append("/home/eliasmullers/Desktop/thesis/eval_fall")
 else:
     sys.path.append(
         "C:\\Users\\elias\\Masterarbeit_code\\Spielplatz\\Code_Harry\\"
