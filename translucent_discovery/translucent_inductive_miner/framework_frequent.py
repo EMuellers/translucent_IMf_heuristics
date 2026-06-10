@@ -62,6 +62,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
 
     def apply(self, obj: T, parameters: Optional[Dict[str, Any]] = None, second_iteration_translucent=False, second_iteration_normal = False) -> ProcessTree:
         noise_threshold = parameters["noise_threshold"]
+        fallthrough_count = 0
         empty_traces = EmptyTracesTranslucent.apply(obj, parameters=parameters)
         if empty_traces is not None and empty_traces[1]:
             number_original_traces = sum(y for y in obj.data_structure.values())
@@ -82,10 +83,10 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                     trace_to_add = ((act, frozenset(act)), (act, frozenset(act)) )
                     obj.tcl.update({trace_to_add: 1})
                     ft = self.fall_through(obj, parameters)
-                    tree = self._recurse(ft[0], ft[1], parameters=parameters)
-                    return tree # self loop, return what the tau loop fallthrough would return
+                    tree, fallthrough_count = self._recurse(ft[0], ft[1], parameters=parameters)
+                    return tree, fallthrough_count # self loop, return what the tau loop fallthrough would return
                 else:
-                    return ProcessTree(label=list(activities)[0]) # no self loop, return just the activity label
+                    return ProcessTree(label=list(activities)[0]), fallthrough_count # no self loop, return just the activity label
         tree = self.apply_base_cases(obj, parameters=parameters)
         if tree is None:
             # First tDFG, then filtered tDFG, then DFG, then filtered DFG
@@ -94,21 +95,21 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                     parameters["tDFG"] = True
                 cut = self.find_cut(obj, parameters=parameters) # called for filtered DFG and unfiltered tDFG and filtered tDFG
                 if cut is not None:
-                    tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                    tree, fallthrough_count = self._recurse(cut[0], cut[1], parameters=parameters)
                 if tree is None:
                     if not second_iteration_translucent: # Hier arc removal heuristik vor Filter
                         if parameters.get("remove_arcs_heuristics", False): # Apply Arc Removal Heuristics before filtering
                                 cut = self.apply_arc_removal_heuristics(obj, parameters)
                                 if cut is not None:
-                                    tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                                    tree, fallthrough_count = self._recurse(cut[0], cut[1], parameters=parameters)
                         if tree is None:
                             filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, True, parameters=parameters)
-                            tree = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True)
+                            tree, fallthrough_count = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True)
                     if second_iteration_translucent: # Hier Heuristik nach Filter arc removal
                         if parameters.get("remove_arcs_heuristics", False) and not second_iteration_normal: # Apply Arc Removal Heuristics after filtering
                             cut = self.apply_arc_removal_heuristics(obj, parameters) 
                             if cut is not None:
-                                tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                                tree, fallthrough_count = self._recurse(cut[0], cut[1], parameters=parameters)
                         if tree is None:   # Heuristic did not yield a cut     
                             # From here: Work on normal DFG
                             parameters["tDFG"] = False
@@ -118,62 +119,64 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                                 cut = self.find_cut(obj, parameters) # performed on unfiltered DFG
                             if cut is not None:
                                 parameters["tDFG"] = True
-                                tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                                tree, fallthrough_count = self._recurse(cut[0], cut[1], parameters=parameters)
                             if tree is None:
                                 if not second_iteration_normal:
                                     # Apply arc addition heuristics before filtering
                                     if parameters.get("add_arcs_heuristics", False):
                                         cut = self.apply_arc_addition_heuristics(obj, parameters)
                                         if cut is not None:
-                                            tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                                            tree, fallthrough_count = self._recurse(cut[0], cut[1], parameters=parameters)
                                     if tree is None: # heuristic did not yield a cut
                                         filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, False, parameters=parameters)
-                                        tree = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True, second_iteration_normal=True) # Try filtered DFG
+                                        tree, fallthrough_count = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True, second_iteration_normal=True) # Try filtered DFG
                                         if tree is None:
                                             if parameters["tDFG_fall_through"]:
                                                 parameters["tDFG"] = True
                                             else:
                                                 parameters["tDFG"] = False
                                             ft = self.fall_through(obj, parameters)
-                                            tree = self._recurse(ft[0], ft[1], parameters=parameters)
+                                            tree, fallthrough_count = self._recurse(ft[0], ft[1], parameters=parameters)
+                                            fallthrough_count += 1
                                 if second_iteration_normal: # no cut found on filtered DFG, try heuristic
                                     # Apply arc addition heuristics on filtered DFG
                                     if parameters.get("add_arcs_heuristics", False):
                                         cut = self.apply_arc_addition_heuristics(obj, parameters)
                                         if cut is not None:
-                                            tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                                            tree, fallthrough_count = self._recurse(cut[0], cut[1], parameters=parameters)
             elif parameters["translucent_variant"] == "IM":
                 parameters["tDFG"] = False
                 if tree is None:
                     cut = self.find_cut(obj, parameters)
                     if cut is not None:
-                        tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                        tree, fallthrough_count = self._recurse(cut[0], cut[1], parameters=parameters)
                     if tree is None:
                         if not second_iteration_normal:
                             filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, False, parameters=parameters)
-                            tree = self.apply(filtered_ds, parameters=parameters, second_iteration_normal=True)
+                            tree, fallthrough_count = self.apply(filtered_ds, parameters=parameters, second_iteration_normal=True)
                             if tree is None:
                                 if parameters["tDFG_fall_through"]:
                                     parameters["tDFG"] = True
                                 else:
                                     parameters["tDFG"] = False
                                 ft = self.fall_through(obj, parameters)
-                                tree = self._recurse(ft[0], ft[1], parameters=parameters)
+                                tree, fallthrough_count = self._recurse(ft[0], ft[1], parameters=parameters)
+                                fallthrough_count += 1
             elif parameters["translucent_variant"] == "IMto": # deprecated
                 parameters["tDFG"] = True
                 if tree is None:
                     cut = self.find_cut(obj, parameters)
                     if cut is not None:
-                        tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                        tree, fallthrough_count = self._recurse(cut[0], cut[1], parameters=parameters)
                     if tree is None:
                         if not second_iteration_translucent: # Hier bevor filter heuristic
                             if parameters.get("remove_arcs_heuristics", False) and parameters["delta_heuristic_frequent_before"]: # Apply Arc Removal Heuristics before filtering
                                 cut = self.apply_arc_removal_heuristics(obj, parameters)
                                 if cut is not None:
-                                    tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                                    tree, fallthrough_count = self._recurse(cut[0], cut[1], parameters=parameters)
                             if tree is None:
                                 filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, translucent=True, parameters=parameters)
-                                tree = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True)
+                                tree, fallthrough_count = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True)
                                 if tree is None:
                                     # Get the filtered dfg 
                                     filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, translucent=False, parameters=parameters)
@@ -181,34 +184,35 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                                     if parameters.get("remove_arcs_heuristics", False) and parameters["delta_heuristic_frequent_after"]: # Apply Arc Removal Heuristics after filtering
                                         cut = self.apply_arc_removal_heuristics(obj, parameters)
                                         if cut is not None:
-                                            tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                                            tree, fallthrough_count = self._recurse(cut[0], cut[1], parameters=parameters)
                                     if tree is None:        
                                         if parameters["tDFG_fall_through"]:
                                             parameters["tDFG"] = True
                                         else:
                                             parameters["tDFG"] = False
                                         ft = self.fall_through(obj, parameters)
-                                        tree = self._recurse(ft[0], ft[1], parameters=parameters)
+                                        tree, fallthrough_count = self._recurse(ft[0], ft[1], parameters=parameters)
+                                        fallthrough_count += 1
             elif parameters["translucent_variant"] == "IMts": 
                 if not second_iteration_translucent:
                     parameters["tDFG"] = False
                 cut = self.find_cut(obj, parameters) # performed on normal DFG, filtered DFG and filtered tDFG
                 if cut is not None:
-                    tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                    tree, fallthrough_count = self._recurse(cut[0], cut[1], parameters=parameters)
                 if tree is None:
                     if not second_iteration_normal:
                         if parameters.get("add_arcs_heuristics", False): # Arc addition heuristic before filtering
                                         cut = self.apply_arc_addition_heuristics(obj, parameters)
                                         if cut is not None:
-                                            tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                                            tree, fallthrough_count = self._recurse(cut[0], cut[1], parameters=parameters)
                         if tree is None:
                             filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, False, parameters=parameters)
-                            tree = self.apply(filtered_ds, parameters=parameters, second_iteration_normal=True)
+                            tree, fallthrough_count = self.apply(filtered_ds, parameters=parameters, second_iteration_normal=True)
                     if second_iteration_normal:
                         if parameters.get("add_arcs_heuristics", False) and not second_iteration_translucent: # Arc addition heuristic after filtering
                                         cut = self.apply_arc_addition_heuristics(obj, parameters)
                                         if cut is not None:
-                                            tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                                            tree, fallthrough_count = self._recurse(cut[0], cut[1], parameters=parameters)
                         if tree is None:
                             parameters["tDFG"] = True
                             # We need to get the unfiltered DFG and tDFG back
@@ -217,15 +221,15 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                                 cut = self.find_cut(obj, parameters)
                             if cut is not None:
                                 parameters["tDFG"] = False
-                                tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                                tree, fallthrough_count = self._recurse(cut[0], cut[1], parameters=parameters)
                             elif parameters.get("remove_arcs_heuristics", False): # Apply Arc Removal Heuristics before filtering, also called after filtering
                                 cut = self.apply_arc_removal_heuristics(obj, parameters)
                                 if cut is not None:
-                                    tree = self._recurse(cut[0], cut[1], parameters=parameters)
+                                    tree, fallthrough_count = self._recurse(cut[0], cut[1], parameters=parameters)
                             if tree is None:
                                 if not second_iteration_translucent:
                                     filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, True, parameters=parameters)
-                                    tree = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True,
+                                    tree, fallthrough_count = self.apply(filtered_ds, parameters=parameters, second_iteration_translucent=True,
                                                     second_iteration_normal=True)
                                     if tree is None:
                                         if parameters["tDFG_fall_through"]:
@@ -233,17 +237,20 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                                         else:
                                             parameters["tDFG"] = False
                                         ft = self.fall_through(obj, parameters)
-                                        tree = self._recurse(ft[0], ft[1], parameters=parameters)
+                                        tree, fallthrough_count = self._recurse(ft[0], ft[1], parameters=parameters)
+                                        fallthrough_count += 1
             else:
                 print("Variant not set!!!")
-        return tree
+        return tree, fallthrough_count
 
     def _recurse(self, tree: ProcessTree, objs: List[T], parameters: Optional[Dict[str, Any]] = None):
-        children = [self.apply(obj, parameters=parameters) for obj in objs]
+        children_results = [self.apply(obj, parameters=parameters) for obj in objs]
+        children = [res[0] for res in children_results]
+        fallthrough_count = sum(res[1] for res in children_results)
         for c in children:
             c.parent = tree
         tree.children.extend(children)
-        return tree
+        return tree, fallthrough_count
 
     @abstractmethod
     def instance(self) -> IMInstance:
