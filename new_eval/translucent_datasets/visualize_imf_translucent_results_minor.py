@@ -24,14 +24,14 @@ mpl.rcParams.update({
 # Configuration
 # ------------------------------------------------------------------
 
-BASE_RESULTS_PATH = Path(r"C:\Users\elias\Masterarbeit_code\Spielplatz\Code_Harry\TranslucentActivityRelationships-main\new_eval\translucent_datasets")
-OUTPUT_PATH = Path(r"C:\Users\elias\Masterarbeit_code\Spielplatz\Code_Harry\TranslucentActivityRelationships-main\new_eval\translucent_datasets\plots\minor_parameters")
+BASE_RESULTS_PATH = Path(r"C:\eval_fall\new_eval\translucent_datasets")
+OUTPUT_PATH = Path(r"C:\eval_fall\new_eval\translucent_datasets\plots\minor_parameters")
 OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
 
-LOG_NAMES = ["Sepsis", "hospital_billing", "road_traffic_fine"]
-#LOG_NAMES = ["hospital_billing"]
-NOISE_TYPES = ["base", "remove_enabled", "add_enabled"]
-#NOISE_TYPES = ["remove_enabled"]
+LOG_NAMES = ["Sepsis", "road_traffic_fine", "hospital_billing"] 
+#LOG_NAMES = ["road_traffic_fine"]
+#NOISE_TYPES = ["base"]
+NOISE_TYPES = ["base","remove_enabled", "remove_events", "add_enabled", "add_events_no_trans"]
 
 # ------------------------------------------------------------------
 # Stable Color Assignment (tab20 colormap)
@@ -70,7 +70,10 @@ def plot_metric_group(df_dict, log_name, noise_type, metric_group_name,
 
         # --- AX1: IMtf ---
         # 1. IMtf normal
-        mask1 = df[normal_cols[0]] > 0
+        if metric_group_name != "No. of Fallthroughs":  # Fallthrough count doesn't have translucent metrics, so we skip the normal metric for better visibility
+            mask1 = df[normal_cols[0]] > 0
+        else:
+            mask1 = df[normal_cols[0]] >= 0
         ax1.plot(
             df.loc[mask1, "threshold"],
             df.loc[mask1, normal_cols[0]],
@@ -93,8 +96,11 @@ def plot_metric_group(df_dict, log_name, noise_type, metric_group_name,
             )
 
         # --- AX2: IMts ---
-        # 3. IMts normal 
-        mask3 = df[normal_cols[1]] > 0
+        # 3. IMts normal
+        if metric_group_name != "No. of Fallthroughs": 
+            mask3 = df[normal_cols[1]] > 0
+        else:
+            mask3 = df[normal_cols[1]] >= 0
         ax2.plot(
             df.loc[mask3, "threshold"],
             df.loc[mask3, normal_cols[1]],
@@ -125,8 +131,8 @@ def plot_metric_group(df_dict, log_name, noise_type, metric_group_name,
     ax2.set_xlabel("Filter Threshold")
     ax1.set_ylabel(ylabel)
     
-    ax1.set_title("IMtf")
-    ax2.set_title("IMts")
+    ax1.set_title("IMftf")
+    ax2.set_title("IMfts")
 
     # Set the main figure title
     noise_str = "No Noise" if noise_type == "base" else f"Noise: {noise_type}"
@@ -258,6 +264,17 @@ def visualize():
                 ["simplicity_tf", "simplicity_ts"],
                 None,  # No translucent metrics here!
                 "Simplicity"
+            )
+            
+            # Fallthrough Count
+            plot_metric_group(
+                df_dict,
+                log_name_pretty,
+                noise_type_pretty,
+                "No. of Fallthroughs",
+                ["fallthrough_count_tf", "fallthrough_count_ts"],
+                None,  # No translucent metrics here!
+                "No. of Fallthroughs"
             )
 
 def get_best_average_f1_per_threshold():
@@ -418,9 +435,9 @@ def prettify_config_label(config_string: str) -> str:
 
     # optional shorter display names
     rename_map = {
-        "translucent_self_loops": "self_loops",
-        "strict_end_activities": "strict_end",
-        "parallel_end_activities_heuristic": "parallel_end",
+        "translucent_self_loops": "self-loops",
+        "strict_end_activities": "strict-end",
+        "parallel_end_activities_heuristic": "parallel-end",
         "remove_arcs_heuristics": "remove_arcs",
         "add_arcs_heuristics": "add_arcs",
     }
