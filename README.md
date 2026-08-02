@@ -1,6 +1,9 @@
 # Heuristically Altering translucent Directly Follows Graphs
-Here we provide the code for our thesis "". This work extends the translucent Inductive Miner-infrequent by Beyel et al.
-We only extended the IMtf and IMts variants.
+Here we provide the code for our thesis "". This work extends the translucent Inductive Miner-infrequent by Beyel et al.:
+
+> **Harry H. Beyel, Wil M. P. van der Aalst**. (2025). *Using translucent activity relationships frequencies to enhance process discovery*.  Process Science 2, 15. [DOI](https://doi.org/10.1007/s44311-025-00010-y) | [Article Link](https://link.springer.com/article/10.1007/s44311-025-00010-y)
+
+We only extended the IMtff and IMfts variants.
 A variant can be chosen by setting the `translucent_variant` parameter in the parameters dict to either "IMtf" or "IMts"
 To use the different heuristics, they should be provided as parameters to the algorithm. By default, all heuristics are considered to be off.
 Here is an overview of the heuristics and which parameter needs to be set to use them:
@@ -28,6 +31,10 @@ Here is an overview of the heuristics and which parameter needs to be set to use
 "translucent_self_loops": Either False or True # Keep translucent self loops when projecting onto single activities, by projecting these on traces where activities follow themselves directly.
 
 # Evaluation
-All evaluation data is contained in the folder "/new_eval"; it also contains the scripts used to generate the normative translucent event logs
-The translucent fitness implementation is found in the folder "/translucent_fitness"
-The translucent precision implementation is found in the folder "/translucent_precision"
+All files pertaining to the evaluation can be found in the eval branch. Note that the version of the algorithm in the eval branch does not only return the pm4py Petri net but also the number of fallthroughs.
+
+## Translucent precision
+Our extension of the translucent precision measure to unfitting traces can be found in the "translucent_precision" directory.
+
+## Translucent fitness
+We ported the translucent fitness measure from networkx to rustworkx for better performance.
