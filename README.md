@@ -39,3 +39,11 @@ Our extension of the translucent precision measure to unfitting traces can be fo
 
 ## Translucent fitness
 We ported the translucent fitness measure from networkx to rustworkx for better performance.
+
+## Petrify
+Our implementation of the region-based translucent process discovery approach using the Petrify library can be found in the "new_eval/utils" directory
+It creates a transition system based on a translucent event log, writes it to a file, calls petrify and imports the output of petrify as a pm4py Petri net.
+
+## Translucent Dataset
+The datasets we generated for our evaluation are provided on zenodo: *LINK*
+The code we used to generate the dataset is provided in ....
