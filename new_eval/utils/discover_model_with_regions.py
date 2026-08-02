@@ -346,7 +346,8 @@ if __name__ == "__main__":
     from translucent_fitness.fitness import calculate_log_fitness
     
     
-    df = pd.read_csv(r"C:\Users\elias\Masterarbeit_code\Spielplatz\Code_Harry\TranslucentActivityRelationships-main\new_eval\translucent_datasets\road_traffic_fine\road_traffic_fine_0.2.csv")
+    #df = pd.read_csv(r"C:\eval_fall\new_eval\translucent_datasets\Sepsis\Sepsis_remove_events.csv")
+    df = pd.read_csv(r"C:\eval_fall\new_eval\translucent_datasets\road_traffic_fine\road_traffic_fine_base.csv")
     #log = get_noisy_log(df, "change_events")
     #log =log_converter.apply(df, variant=log_converter.Variants.TO_EVENT_LOG, parameters={'pm4py:param:case_id_key': "case:concept:name", "activity_key": "concept:name"})
     #df = pd.read_csv(r"C:\Users\elias\Desktop\Results_22.02\TranslucentActivityRelationships-main\new_eval\translucent_datasets\Sepsis\Sepsis_0.2_add_events.csv")
@@ -360,14 +361,14 @@ if __name__ == "__main__":
     #net, im, fm = pm4py.discover_petri_net_inductive(log, noise_threshold=0.2)
     #pm4py.write_pnml(net, im, fm, r"C:\Users\elias\Masterarbeit_code\Spielplatz\Code_Harry\TranslucentActivityRelationships-main\new_eval\utils\petrify_nets\road_traffic_fine_0.2_test.pnml")
     #net, im, fm = pm4py.discover_petri_net_inductive(log, noise_threshold=0.2)
-    net, im, fm = pm4py.read_pnml(r"C:\Users\elias\Masterarbeit_code\Spielplatz\Code_Harry\TranslucentActivityRelationships-main\new_eval\utils\petrify_nets\road_traffic_fine_0.2_test.pnml")
+    net, im, fm = pm4py.read_pnml(r"C:\eval_fall\new_eval\translucent_datasets\Sepsis\pnml\petrify\remove_events\petrify.pnml")
     #net, im, fm = pm4py.read_pnml(r"C:\Users\elias\Masterarbeit_code\Spielplatz\Code_Harry\TranslucentActivityRelationships-main\new_eval\utils\petrify_nets\Sepsis_0.2_test.pnml")
     #fitness = pm4py.conformance.fitness_alignments(log, net, im, fm)["log_fitness"]
     #precision = pm4py.conformance.precision_alignments(log, net, im, fm)
     
     #precision, classic_fitness = translucent_precision_score(log, net, im, fm)
     start = time.time()
-    fitness = calculate_log_fitness(log, net, im, fm)
+    fitness = pm4py.conformance.fitness_alignments(log, net, im, fm)["log_fitness"]
     print(f"Fitness: {fitness}")
     print(f"Time taken for fitness calculation: {time.time() - start} seconds")
     pm4py.view_petri_net(net, im, fm)

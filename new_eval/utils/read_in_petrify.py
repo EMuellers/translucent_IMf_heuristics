@@ -4,7 +4,6 @@ from pm4py.objects.petri_net.utils import petri_utils
 import re
 
 def remove_label_splitting_for_conformance_checking(net: PetriNet, original_transitions: list[str]) -> PetriNet:
-    #Todo: Check whether only changing the label and not the name is sufficient
     for transition in net.transitions:
         if transition.label not in original_transitions:
             transition.label = transition.label.rsplit('/', 1)[0]
@@ -200,7 +199,7 @@ def parse_petrify_net_to_pm4py(file_path: str) -> tuple[PetriNet, Marking, Marki
     
      
     remove_label_splitting_for_conformance_checking(net, inputs)
-    add_back_spaces_in_labels(net) #! If activities contain underscores in original log this needs to be changed! Even more headache if both spaces and underscores are used...
+    #add_back_spaces_in_labels(net) #! If activities contain underscores in original log this needs to be changed! Even more headache if both spaces and underscores are used...
     
     # Debug: Display the Petri net
     #pm4py.view_petri_net(net, im, fm)
