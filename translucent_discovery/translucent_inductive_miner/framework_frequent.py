@@ -137,7 +137,9 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                                                 parameters["tDFG"] = False
                                             ft = self.fall_through(obj, parameters)
                                             tree, fallthrough_count = self._recurse(ft[0], ft[1], parameters=parameters)
-                                            fallthrough_count += 1
+                                            activities = self._get_executed_activities_uvcl(obj.data_structure)
+                                            if len(activities) != 1:
+                                                fallthrough_count += 1
                                 if second_iteration_normal: # no cut found on filtered DFG, try heuristic
                                     # Apply arc addition heuristics on filtered DFG
                                     if parameters.get("add_arcs_heuristics", False):
@@ -152,7 +154,7 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                         tree, fallthrough_count = self._recurse(cut[0], cut[1], parameters=parameters)
                     if tree is None:
                         if not second_iteration_normal:
-                            filtered_ds = self.__filter_dfg_noise(obj, noise_threshold, False, parameters=parameters)
+                            filtered_ds = self.__filter_dfg_noise_pm4py(obj, noise_threshold, False, parameters=parameters)
                             tree, fallthrough_count = self.apply(filtered_ds, parameters=parameters, second_iteration_normal=True)
                             if tree is None:
                                 if parameters["tDFG_fall_through"]:
@@ -161,7 +163,9 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                                     parameters["tDFG"] = False
                                 ft = self.fall_through(obj, parameters)
                                 tree, fallthrough_count = self._recurse(ft[0], ft[1], parameters=parameters)
-                                fallthrough_count += 1
+                                activities = self._get_executed_activities_uvcl(obj.data_structure)
+                                if len(activities) != 1:
+                                    fallthrough_count += 1
             elif parameters["translucent_variant"] == "IMto": # deprecated
                 parameters["tDFG"] = True
                 if tree is None:
@@ -192,7 +196,9 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                                             parameters["tDFG"] = False
                                         ft = self.fall_through(obj, parameters)
                                         tree, fallthrough_count = self._recurse(ft[0], ft[1], parameters=parameters)
-                                        fallthrough_count += 1
+                                        activities = self._get_executed_activities_uvcl(obj.data_structure)
+                                        if len(activities) != 1:
+                                            fallthrough_count += 1
             elif parameters["translucent_variant"] == "IMts": 
                 if not second_iteration_translucent:
                     parameters["tDFG"] = False
@@ -238,7 +244,9 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
                                             parameters["tDFG"] = False
                                         ft = self.fall_through(obj, parameters)
                                         tree, fallthrough_count = self._recurse(ft[0], ft[1], parameters=parameters)
-                                        fallthrough_count += 1
+                                        activities = self._get_executed_activities_uvcl(obj.data_structure)
+                                        if len(activities) != 1:
+                                            fallthrough_count += 1
             else:
                 print("Variant not set!!!")
         return tree, fallthrough_count
@@ -352,7 +360,104 @@ class InductiveMinerFrequentFrameworkTranslucent(ABC, Generic[T]):
         
         # Return datastructure with filtered DFG and tDFG
         return IMDataStructureTranslucent(obj.data_structure, obj.tcl, dfg = dfg, tdfg = tdfg, frequent=True, parameters=parameters, self_loop_info = obj._translucent_self_loops) # Frequent set to true so that handed tdfg is kept
+
+    #Filtering of DFG and tDFG as performed by pm4py which does not filter start activities
+    def __filter_dfg_noise_pm4py(self, obj, noise_threshold, translucent, parameters={}):
+        # First filter the DFG
+        start_activities = copy(obj.dfg.start_activities)
+        end_activities = copy(obj.dfg.end_activities)
+        dfg = copy(obj.dfg.graph)
+        outgoing_max_occ = {}
+        for x, y in dfg.items():
+            act = x[0]
+            if act not in outgoing_max_occ:
+                outgoing_max_occ[act] = y
+            else:
+                outgoing_max_occ[act] = max(y, outgoing_max_occ[act])
+            if act in end_activities:
+                outgoing_max_occ[act] = max(outgoing_max_occ[act], end_activities[act])
+        dfg_list = sorted([(x, y) for x, y in dfg.items()], key=lambda x: (x[1], x[0]), reverse=True)
+        dfg_list = [x for x in dfg_list if x[1] > noise_threshold * outgoing_max_occ[x[0][0]]]
+        dfg_list = [x[0] for x in dfg_list]
+        # filter the elements in the DFG
+        graph = {x: y for x, y in dfg.items() if x in dfg_list}
         
+        # apply filtering to start activities
+        start_max_occ = max(start_activities.values())
+        start_activities = {x: y for x, y in start_activities.items()
+             if y >= start_max_occ * noise_threshold
+        }
+        """
+        # apply filtering to end activities
+        delete_list = []
+        for act in end_activities:
+            if act in outgoing_max_occ:
+                max_occ = outgoing_max_occ[act]
+            else:
+                max_occ = end_activities[act]
+            if end_activities[act] < max_occ * noise_threshold:
+                delete_list.append(act)
+        for act in delete_list:
+            del end_activities[act]
+        """
+        dfg = DFG()
+        for sa in start_activities:
+            dfg.start_activities[sa] = start_activities[sa]
+        for ea in end_activities:
+            dfg.end_activities[ea] = end_activities[ea]
+        for act in graph:
+            dfg.graph[act] = graph[act]
+        
+        # Create filtered tDFG
+        # First discover plain tfdfg
+        tfdfg = discover_frequent_dfg_tcl(obj.tcl, parameters=parameters, self_loops=obj._translucent_self_loops)
+        #now apply filtering threshold to tfdfg
+        start_activities_tdfg = copy(tfdfg.start_activities)
+        end_activities_tdfg = copy(tfdfg.end_activities)
+        tdfg = copy(tfdfg.graph)
+        outgoing_max_occ_tdfg = {}
+        for x, y in tdfg.items():
+            act = x[0]
+            if act not in outgoing_max_occ_tdfg:
+                outgoing_max_occ_tdfg[act] = y
+            else:
+                outgoing_max_occ_tdfg[act] = max(y, outgoing_max_occ_tdfg[act])
+            if act in end_activities_tdfg:
+                outgoing_max_occ_tdfg[act] = max(outgoing_max_occ_tdfg[act], end_activities_tdfg[act])
+        tdfg_list = sorted([(x, y) for x, y in tdfg.items()], key=lambda x: (x[1], x[0]), reverse=True)
+        tdfg_list = [x for x in tdfg_list if x[1] > noise_threshold * outgoing_max_occ_tdfg[x[0][0]]]
+        tdfg_list = [x[0] for x in tdfg_list]
+        # filter the elements in the DFG
+        graph_tdfg = {x: y for x, y in tdfg.items() if x in tdfg_list}
+        
+        # apply filtering to start activities
+        start_max_occ_tdfg = max(start_activities_tdfg.values())
+        start_activities_tdfg = {x: y for x, y in start_activities_tdfg.items()
+             if y >= start_max_occ_tdfg * noise_threshold
+        }
+        """
+        # apply filtering to end activities
+        delete_list = []
+        for act in end_activities_tdfg:
+            if act in outgoing_max_occ_tdfg:
+                max_occ = outgoing_max_occ_tdfg[act]
+            else:
+                max_occ = end_activities_tdfg[act]
+            if end_activities_tdfg[act] < max_occ * noise_threshold:
+                delete_list.append(act)
+        for act in delete_list:
+            del end_activities_tdfg[act]
+        """
+        tdfg = DFG()
+        for sa in start_activities_tdfg:
+            tdfg.start_activities[sa] = start_activities_tdfg[sa]
+        for ea in end_activities_tdfg:
+            tdfg.end_activities[ea] = end_activities_tdfg[ea]
+        for act in graph_tdfg:
+            tdfg.graph[act] = graph_tdfg[act]
+        
+        # Return datastructure with filtered DFG and tDFG
+        return IMDataStructureTranslucent(obj.data_structure, obj.tcl, dfg = dfg, tdfg = tdfg, frequent=True, parameters=parameters, self_loop_info = obj._translucent_self_loops) # Frequent set to true so that handed tdfg is kept
         
     def apply_arc_removal_heuristics(self, obj: T, parameters: Optional[Dict[str, Any]] = None) -> Optional[Tuple[ProcessTree, List[T]]]:
         """Applies arc removal heuristics to try to find a cut in the modified tDFG. If no cut is found, None is returned."""
