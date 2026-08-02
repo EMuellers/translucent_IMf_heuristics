@@ -63,7 +63,7 @@ def plot_metric_group(df_dict, log_name, noise_type, metric_group_name,
         df = df.sort_values("threshold")
         color = color_map[config_key]
         
-        if config_key == "No heuristics":
+        if config_key == "No Heuristics":
             z_order = 20  # Draw "No heuristics" on top
         else:
             z_order = None
@@ -164,8 +164,8 @@ def plot_metric_group(df_dict, log_name, noise_type, metric_group_name,
         ]
         
     legend_elements += [
-        Line2D([0], [0], color="black", lw=2, marker="^", label="IMtf"),
-        Line2D([0], [0], color="black", lw=2, marker="o", label="IMts"),
+        Line2D([0], [0], color="black", lw=2, marker="^", label="IMftf"),
+        Line2D([0], [0], color="black", lw=2, marker="o", label="IMfts"),
     ]
 
     # Attach legend to the figure, centered at the bottom.
@@ -173,8 +173,8 @@ def plot_metric_group(df_dict, log_name, noise_type, metric_group_name,
     fig.legend(
         handles=legend_elements,
         loc="lower center",
-        bbox_to_anchor=(0.5, 0.02), 
-        ncol=3, 
+        bbox_to_anchor=(0.5, 0.08), # 0.5, 0.02
+        ncol=6, 
         frameon=True
     )
 
@@ -249,10 +249,10 @@ def visualize():
                 df_dict,
                 log_name_pretty,
                 noise_type_pretty,
-                "F1 Score",
+                "F1-score",
                 ["f_1_score_tf", "f_1_score_ts"],
                 ["translucent_f_1_score_tf", "translucent_f_1_score_ts"],
-                "F1 Score"
+                "F1-score"
             )
             
             # Simplicity
@@ -274,7 +274,7 @@ def visualize():
                 "No. of Fallthroughs",
                 ["fallthrough_count_tf", "fallthrough_count_ts"],
                 None,  # No translucent metrics here!
-                "No. of Fallthroughs"
+                "No. of fallthroughs"
             )
 
 def get_best_average_f1_per_threshold():
@@ -428,7 +428,7 @@ def prettify_config_label(config_string: str) -> str:
     # Remove false entries, meaning heuristic was not applied
     result = {k: v for k, v in result.items() if v != 'False'}
     if not result:
-        return "No heuristics"
+        return "No Heuristics"
     
     
     

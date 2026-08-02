@@ -3,12 +3,13 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from pathlib import Path
 import matplotlib as mpl
+from matplotlib.ticker import MaxNLocator
 import re
 
 # ------------------------------------------------------------------
 # Global Styling (Thesis-ready)
 # ------------------------------------------------------------------
-# TODO: Add Symbol for non translucent IMf in graph
+
 mpl.rcParams.update({
     "font.family": "serif",
     "font.size": 12,
@@ -25,13 +26,12 @@ mpl.rcParams.update({
 # ------------------------------------------------------------------
 
 BASE_RESULTS_PATH = Path(r"C:\eval_fall\new_eval\translucent_datasets")
-OUTPUT_PATH = Path(r"C:\eval_fall\new_eval\translucent_datasets\plots\delta_heur")
+OUTPUT_PATH = Path(r"C:\eval_fall\new_eval\translucent_datasets\plots\minor_parameters")
 OUTPUT_PATH.mkdir(parents=True, exist_ok=True)
-NO_HEURISTICS_FILE_NAME = "IMf_results_translucent_self_loops_False_strict_end_activities_False_parallel_end_activities_heuristic_False_remove_arcs_heuristics_False_add_arcs_heuristics_False.csv"
 
-LOG_NAMES = ["Sepsis", "hospital_billing", "road_traffic_fine"]
+LOG_NAMES = ["Sepsis", "road_traffic_fine", "hospital_billing"] 
 #LOG_NAMES = ["road_traffic_fine"]
-#NOISE_TYPES = ["base", "remove_enabled"]
+#NOISE_TYPES = ["base"]
 NOISE_TYPES = ["base","remove_enabled", "remove_events", "add_enabled", "add_events_no_trans"]
 
 # ------------------------------------------------------------------
@@ -52,27 +52,20 @@ def assign_colors(config_keys):
 # ------------------------------------------------------------------
 
 def plot_metric_group(df_dict, log_name, noise_type, metric_group_name,
-                      normal_cols, translucent_cols, ylabel, Petrify_df, IMf_df, IM_trans_no_heur_df):
+                      normal_cols, translucent_cols, ylabel, Petrify_df, IMf_df,
+                      include_headings=True):
 
     config_keys = list(df_dict.keys())
-    
-    all_approaches = config_keys + ["Petrify", "IMf", "IMf no heuristics"]
-    
+    all_approaches = config_keys + ["Petrify", "IMf"]
     color_map = assign_colors(all_approaches)
-    
-    #color_map = assign_colors(config_keys)
-    
-    color_petrify = color_map.get("Petrify", "black") #! Placeholder
-    
-    color_IMf = color_map.get("IMf", "red") #! Placeholder
-    
+
+    color_petrify = color_map.get("Petrify", "black")
+    color_IMf = color_map.get("IMf", "red")
+
     normal_col_non_trans = normal_cols[0][:-3]
     if translucent_cols:
         translucent_col_no_trans = translucent_cols[0][:-3]
-    
-    color_IMf_trans_no_heur = color_map.get("IMf no heuristics", "green") #! Placeholder
-    
-    
+
     # 1. Create a 1x2 grid. We use sharey=True so the Y-axis scale matches perfectly side-by-side
     fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(12, 6), sharey=True)
 
@@ -80,14 +73,17 @@ def plot_metric_group(df_dict, log_name, noise_type, metric_group_name,
         df = df.sort_values("threshold")
         color = color_map[config_key]
         
-        if config_key == "No heuristics":
-            z_order = 20  # Draw "No heuristics" on top
+        if config_key == "No Heuristics":
+            z_order = 20  # Draw "No Heuristics" on top
         else:
             z_order = None
 
         # --- AX1: IMtf ---
         # 1. IMtf normal
-        mask1 = df[normal_cols[0]] > 0
+        if metric_group_name != "No. of Fallthroughs":  # Fallthrough count doesn't have translucent metrics, so we skip the normal metric for better visibility
+            mask1 = df[normal_cols[0]] > 0
+        else:
+            mask1 = df[normal_cols[0]] >= 0
         ax1.plot(
             df.loc[mask1, "threshold"],
             df.loc[mask1, normal_cols[0]],
@@ -110,14 +106,17 @@ def plot_metric_group(df_dict, log_name, noise_type, metric_group_name,
             )
 
         # --- AX2: IMts ---
-        # 3. IMts normal 
-        mask3 = df[normal_cols[1]] > 0
+        # 3. IMts normal
+        if metric_group_name != "No. of Fallthroughs": 
+            mask3 = df[normal_cols[1]] > 0
+        else:
+            mask3 = df[normal_cols[1]] >= 0
         ax2.plot(
             df.loc[mask3, "threshold"],
             df.loc[mask3, normal_cols[1]],
             linestyle="-",
             marker="o",
-            markersize=4,
+            markersize=5,
             color=color,
             zorder=z_order
         )
@@ -130,20 +129,26 @@ def plot_metric_group(df_dict, log_name, noise_type, metric_group_name,
                 df.loc[mask4, translucent_cols[1]],
                 linestyle=":",
                 marker="o",
-                markersize=4,
+                markersize=5,
                 color=color,
                 zorder=z_order
             )
-    
+
+    z_order = None
+
+    # CRITICAL FIX: Explicitly sort IMf_df by threshold to prevent out-of-order line tracking
     IMf_df = IMf_df.sort_values("threshold")
-    
+
     # 5. IMf normal for tf graph
-    mask1 = IMf_df[normal_col_non_trans] > 0
+    if metric_group_name != "No. of Fallthroughs":
+        mask1 = IMf_df[normal_col_non_trans] > 0
+    else:
+        mask1 = IMf_df[normal_col_non_trans] >= 0
     ax1.plot(
         IMf_df.loc[mask1, "threshold"],
         IMf_df.loc[mask1, normal_col_non_trans],
         linestyle="-",
-        #marker="^",
+        marker="x",
         color=color_IMf,
         zorder=z_order
     )
@@ -155,19 +160,21 @@ def plot_metric_group(df_dict, log_name, noise_type, metric_group_name,
             IMf_df.loc[mask2, "threshold"],
             IMf_df.loc[mask2, translucent_col_no_trans],
             linestyle=":",
-            #marker="^",
+            marker="x",
             color=color_IMf,
             zorder=z_order
         )
         
     # 7. IMf normal for ts graph
-    mask3 = IMf_df[normal_col_non_trans] > 0
+    if metric_group_name != "No. of Fallthroughs":
+        mask3 = IMf_df[normal_col_non_trans] > 0
+    else:
+        mask3 = IMf_df[normal_col_non_trans] >= 0
     ax2.plot(
         IMf_df.loc[mask3, "threshold"],
         IMf_df.loc[mask3, normal_col_non_trans],
         linestyle="-",
-        #marker="o",
-        markersize=4,
+        marker="x",
         color=color_IMf,
         zorder=z_order
     )
@@ -179,122 +186,61 @@ def plot_metric_group(df_dict, log_name, noise_type, metric_group_name,
             IMf_df.loc[mask4, "threshold"],
             IMf_df.loc[mask4, translucent_col_no_trans],
             linestyle=":",
-            #marker="o",
-            markersize=4,
+            marker="x",
             color=color_IMf,
             zorder=z_order
         )
+
+    # 9-12. Petrify normal and translucent graphs (Excluded from "No. of Fallthroughs")
+    if metric_group_name != "No. of Fallthroughs":
+        petrify_normal_val = Petrify_df[normal_col_non_trans].iloc[0]
+        if petrify_normal_val < 0:
+            petrify_normal_val = 0
         
-    # Extract the single scalar values from the 1-row Petrify dataframe
-    petrify_normal_val = Petrify_df[normal_col_non_trans].iloc[0]
-    if petrify_normal_val < 0:
-        petrify_normal_val = 0
-    
-    if translucent_cols:
-        petrify_trans_val = Petrify_df[translucent_col_no_trans].iloc[0]
-        if petrify_trans_val < 0:
-            petrify_trans_val = 0
+        if translucent_cols:
+            petrify_trans_val = Petrify_df[translucent_col_no_trans].iloc[0]
+            if petrify_trans_val < 0:
+                petrify_trans_val = 0
 
-    # 9. Petrify normal for tf graph
-    #mask1 = Petrify_df[normal_col_non_trans] > 0
-    ax1.plot(
-        [0, 1],
-        [petrify_normal_val, petrify_normal_val],
-        linestyle="-",
-        #marker="^",
-        color=color_petrify,
-        zorder=0
-    )
-
-    # 10. Petrify translucent values for tf graph
-    if translucent_cols:
-        #mask2 = Petrify_df[translucent_col_no_trans] > 0
+        # 9. Petrify normal for tf graph
         ax1.plot(
             [0, 1],
-            [petrify_trans_val, petrify_trans_val],
-            linestyle=":",
-            #marker="^",
+            [petrify_normal_val, petrify_normal_val],
+            linestyle="-",
             color=color_petrify,
             zorder=0
         )
-        
-    # 11. Petrify normal for ts graph
-    #mask3 = Petrify_df[normal_col_non_trans] > 0
-    ax2.plot(
-        [0, 1],
-        [petrify_normal_val, petrify_normal_val],
-        linestyle="-",
-        #marker="o",
-        markersize=4,
-        color=color_petrify,
-        zorder=0
-    )
 
-    # 12. Petrify translucent values for ts graph
-    if translucent_cols:
-        #mask4 = Petrify_df[translucent_col_no_trans] > 0
+        # 10. Petrify translucent values for tf graph
+        if translucent_cols:
+            ax1.plot(
+                [0, 1],
+                [petrify_trans_val, petrify_trans_val],
+                linestyle=":",
+                color=color_petrify,
+                zorder=0
+            )
+            
+        # 11. Petrify normal for ts graph
         ax2.plot(
             [0, 1],
-            [petrify_trans_val, petrify_trans_val],
-            linestyle=":",
-            #marker="o",
+            [petrify_normal_val, petrify_normal_val],
+            linestyle="-",
             markersize=4,
             color=color_petrify,
             zorder=0
         )
-    
-    IM_trans_no_heur_df = IM_trans_no_heur_df.sort_values("threshold")
-    
-    # 13. IMtf no heuristics normal
-    mask1 = IM_trans_no_heur_df[normal_cols[0]] > 0
-    ax1.plot(
-        IM_trans_no_heur_df.loc[mask1, "threshold"],
-        IM_trans_no_heur_df.loc[mask1, normal_cols[0]],
-        linestyle="-",
-        marker="^",
-        color=color_IMf_trans_no_heur,
-        zorder=z_order
-    )
 
-    # 14. IMtf no heuristics translucent
-    if translucent_cols:
-        mask2 = IM_trans_no_heur_df[translucent_cols[0]] > 0
-        ax1.plot(
-            IM_trans_no_heur_df.loc[mask2, "threshold"],
-            IM_trans_no_heur_df.loc[mask2, translucent_cols[0]],
-            linestyle=":",
-            marker="^",
-            color=color_IMf_trans_no_heur,
-            zorder=z_order
-        )
-
-    # --- AX2: IMts ---
-    # 15. IMts no heuristics normal 
-    mask3 = IM_trans_no_heur_df[normal_cols[1]] > 0
-    ax2.plot(
-        IM_trans_no_heur_df.loc[mask3, "threshold"],
-        IM_trans_no_heur_df.loc[mask3, normal_cols[1]],
-        linestyle="-",
-        marker="o",
-        markersize=4,
-        color=color_IMf_trans_no_heur,
-        zorder=z_order
-    )
-
-    # 16. IMts no heuristics translucent
-    if translucent_cols:
-        mask4 = IM_trans_no_heur_df[translucent_cols[1]] > 0
-        ax2.plot(
-            IM_trans_no_heur_df.loc[mask4, "threshold"],
-            IM_trans_no_heur_df.loc[mask4, translucent_cols[1]],
-            linestyle=":",
-            marker="o",
-            markersize=4,
-            color=color_IMf_trans_no_heur,
-            zorder=z_order
-        )
-    
-
+        # 12. Petrify translucent values for ts graph
+        if translucent_cols:
+            ax2.plot(
+                [0, 1],
+                [petrify_trans_val, petrify_trans_val],
+                linestyle=":",
+                markersize=4,
+                color=color_petrify,
+                zorder=0
+            )
 
     # ------------------------------------------------------------------
     # Titles & Labels
@@ -303,13 +249,19 @@ def plot_metric_group(df_dict, log_name, noise_type, metric_group_name,
     ax2.set_xlabel("Filter Threshold")
     ax1.set_ylabel(ylabel)
     
+    # Subplot columns are always titled
     ax1.set_title("IMftf")
     ax2.set_title("IMfts")
 
-    # Set the main figure title
-    noise_str = "No Noise" if noise_type == "base" else f"Noise: {noise_type}"
-    fig.suptitle(f"{metric_group_name} | Log: {log_name} | {noise_str}", fontsize=16)
+    if include_headings:
+        # Set the main top figure title
+        noise_str = "No Noise" if noise_type == "base" else f"Noise: {noise_type}"
+        fig.suptitle(f"{metric_group_name} | Log: {log_name} | {noise_str}", fontsize=16)
 
+    if metric_group_name == "No. of Fallthroughs":
+        ax1.yaxis.set_major_locator(MaxNLocator(integer=True))
+        ax2.yaxis.set_major_locator(MaxNLocator(integer=True))
+    
     ax1.grid(True, alpha=0.3)
     ax2.grid(True, alpha=0.3)
     
@@ -324,11 +276,13 @@ def plot_metric_group(df_dict, log_name, noise_type, metric_group_name,
         legend_elements.append(
             Line2D([0], [0], color=color_map[key], lw=3, label=key)
         )
-    
+
     # Standalone approaches (colors)
-    legend_elements.append(Line2D([0], [0], color=color_petrify, lw=3, label="Petrify"))
-    legend_elements.append(Line2D([0], [0], color=color_IMf, lw=3, label="IMf"))
-    legend_elements.append(Line2D([0], [0], color=color_IMf_trans_no_heur, lw=3, label="Translucent IMf without Heuristics"))
+    columns = 6
+    if metric_group_name != "No. of Fallthroughs":
+        columns = 7
+        legend_elements.append(Line2D([0], [0], color=color_petrify, lw=2, label="Petrify"))
+    legend_elements.append(Line2D([0], [0], color=color_IMf, marker="x", lw=2, label="IMf"))
 
     # Metric types
     legend_elements += [
@@ -337,7 +291,7 @@ def plot_metric_group(df_dict, log_name, noise_type, metric_group_name,
     
     if translucent_cols:
         legend_elements += [
-            Line2D([0], [0], color="black", lw=2, linestyle=":", label="Translucent Metric"),
+            Line2D([0], [0], color="black", lw=2, linestyle=":", label="Transl. Metric"),
         ]
         
     legend_elements += [
@@ -346,22 +300,23 @@ def plot_metric_group(df_dict, log_name, noise_type, metric_group_name,
     ]
 
     # Attach legend to the figure, centered at the bottom.
-    # We use ncol=3 to spread the items horizontally so it doesn't get too tall.
     fig.legend(
         handles=legend_elements,
         loc="lower center",
-        bbox_to_anchor=(0.5, -0.07), 
-        ncol=3, 
+        bbox_to_anchor=(0.5, 0.08), 
+        ncol=columns, 
         frameon=True
     )
 
     # Adjust layout to prevent overlap, making room for the suptitle (top) and legend (bottom)
     plt.tight_layout()
-    fig.subplots_adjust(top=0.88, bottom=0.25) 
+    
+    # Dynamically scale top margin depending on whether the overarching figure title is active
+    top_margin = 0.88 if include_headings else 0.93
+    fig.subplots_adjust(top=top_margin, bottom=0.25) 
     
     output_file = OUTPUT_PATH / f"{log_name}_{noise_type}_{metric_group_name}.pdf"
-    #plt.savefig(output_file, format="pdf", bbox_inches="tight")
-    fig.savefig(output_file, format="pdf", bbox_inches="tight")
+    fig.savefig(output_file, format="pdf", bbox_inches="tight", pad_inches=0.01)
     plt.close()
 
 
@@ -369,7 +324,7 @@ def plot_metric_group(df_dict, log_name, noise_type, metric_group_name,
 # Main Visualization Routine
 # ------------------------------------------------------------------
 
-def visualize():
+def visualize(include_headings=True):
 
     for log_name in LOG_NAMES:
         for noise_type in NOISE_TYPES:
@@ -378,7 +333,7 @@ def visualize():
                 BASE_RESULTS_PATH
                 / log_name
                 / "results"
-                / "translucent_delta_all"
+                / "translucent"
                 / noise_type
             )
 
@@ -400,7 +355,7 @@ def visualize():
             log_name_pretty = prettify_log_name(log_name)
             noise_type_pretty = prettify_noise_type(noise_type)
 
-            # Handle petrify and IMf
+            # Handle petrify and IMf paths
             petrify_results_path = (
                 BASE_RESULTS_PATH
                 / log_name
@@ -409,10 +364,7 @@ def visualize():
                 / noise_type
                 / "petrify_results.csv"
             )
-            
             petrify_df = pd.read_csv(petrify_results_path)
-            #df_dict["Petrify"] = petrify_df
-            
             
             IMf_results_path = (
                 BASE_RESULTS_PATH
@@ -422,24 +374,8 @@ def visualize():
                 / noise_type
                 / "IMf_results.csv"
             )
-            
             IMf_df = pd.read_csv(IMf_results_path)
-            #df_dict["IMf"] = IMf_df
-            
-            #TODO: Include No heuristics?
-            IMf_trans_base_path = (
-                BASE_RESULTS_PATH
-                / log_name
-                / "results"
-                / "translucent"
-                / noise_type
-                / NO_HEURISTICS_FILE_NAME
-            )
-            
-            IMf_trans_base_df = pd.read_csv(IMf_trans_base_path)
-            #df_dict["No heuristics"] = IMf_trans_base_df
-            
-            
+
             # Fitness
             plot_metric_group(
                 df_dict,
@@ -451,7 +387,7 @@ def visualize():
                 "Fitness",
                 petrify_df,
                 IMf_df,
-                IMf_trans_base_df
+                include_headings=include_headings
             )
 
             # Precision
@@ -465,7 +401,7 @@ def visualize():
                 "Precision",
                 petrify_df,
                 IMf_df,
-                IMf_trans_base_df
+                include_headings=include_headings
             )
 
             # F1 Score
@@ -473,13 +409,13 @@ def visualize():
                 df_dict,
                 log_name_pretty,
                 noise_type_pretty,
-                "F1 Score",
+                "F1-score",
                 ["f_1_score_tf", "f_1_score_ts"],
                 ["translucent_f_1_score_tf", "translucent_f_1_score_ts"],
-                "F1 Score",
+                "F1-score",
                 petrify_df,
                 IMf_df,
-                IMf_trans_base_df
+                include_headings=include_headings
             )
             
             # Simplicity
@@ -493,110 +429,22 @@ def visualize():
                 "Simplicity",
                 petrify_df,
                 IMf_df,
-                IMf_trans_base_df
+                include_headings=include_headings
             )
-"""
-def get_best_average_f1_per_threshold():
-
-    results_summary = []
-
-    for log_name in LOG_NAMES:
-        for noise_type in NOISE_TYPES:
-
-            results_folder = (
-                BASE_RESULTS_PATH
-                / log_name
-                / "results"
-                / "translucent_delta"
-                / noise_type
+            
+            # Fallthrough Count
+            plot_metric_group(
+                df_dict,
+                log_name_pretty,
+                noise_type_pretty,
+                "No. of Fallthroughs",
+                ["fallthrough_count_tf", "fallthrough_count_ts"],
+                None,  # No translucent metrics here!
+                "No. of fallthroughs",
+                petrify_df,
+                IMf_df,
+                include_headings=include_headings
             )
-
-            if not results_folder.exists():
-                continue
-
-            # ----------------------------------------------------------
-            # Load all configs into a single dataframe
-            # ----------------------------------------------------------
-
-            all_data = []
-
-            for file in results_folder.glob("IMf_results_*.csv"):
-                config_key = file.stem.replace("IMf_results_", "")
-                df = pd.read_csv(file)
-                df["config"] = config_key
-                all_data.append(df)
-
-            if not all_data:
-                continue
-
-            full_df = pd.concat(all_data, ignore_index=True)
-
-            # ----------------------------------------------------------
-            # Compute per-threshold best configs
-            # ----------------------------------------------------------
-
-            for threshold in sorted(full_df["threshold"].unique()):
-
-                df_f = full_df[full_df["threshold"] == threshold]
-
-                # --- IMtf normal F1 ---
-                tf_normal = (
-                    df_f.groupby("config")["f_1_score_tf"]
-                    .mean()
-                    .reset_index()
-                )
-                best_tf_normal = tf_normal.loc[tf_normal["f_1_score_tf"].idxmax()]
-
-                # --- IMtf translucent F1 ---
-                tf_trans = (
-                    df_f.groupby("config")["translucent_f_1_score_tf"]
-                    .mean()
-                    .reset_index()
-                )
-                best_tf_trans = tf_trans.loc[
-                    tf_trans["translucent_f_1_score_tf"].idxmax()
-                ]
-
-                # --- IMts normal F1 ---
-                ts_normal = (
-                    df_f.groupby("config")["f_1_score_ts"]
-                    .mean()
-                    .reset_index()
-                )
-                best_ts_normal = ts_normal.loc[ts_normal["f_1_score_ts"].idxmax()]
-
-                # --- IMts translucent F1 ---
-                ts_trans = (
-                    df_f.groupby("config")["translucent_f_1_score_ts"]
-                    .mean()
-                    .reset_index()
-                )
-                best_ts_trans = ts_trans.loc[
-                    ts_trans["translucent_f_1_score_ts"].idxmax()
-                ]
-
-                results_summary.append({
-                    "log": log_name,
-                    "noise": noise_type,
-                    "threshold": threshold,
-
-                    "IMtf_best_f1": best_tf_normal["f_1_score_tf"],
-                    "IMtf_best_f1_config": prettify_config_label(best_tf_normal["config"]),
-
-                    "IMtf_best_translucent_f1": best_tf_trans["translucent_f_1_score_tf"],
-                    "IMtf_best_translucent_f1_config": prettify_config_label(best_tf_trans["config"]),
-
-                    "IMts_best_f1": best_ts_normal["f_1_score_ts"],
-                    "IMts_best_f1_config": prettify_config_label(best_ts_normal["config"]),
-
-                    "IMts_best_translucent_f1": best_ts_trans["translucent_f_1_score_ts"],
-                    "IMts_best_translucent_f1_config": prettify_config_label(best_ts_trans["config"]),
-                })
-
-    summary_df = pd.DataFrame(results_summary)
-
-    return summary_df
-"""
 
 def prettify_noise_type(noise_type: str) -> str:
     noise_map = {
@@ -618,13 +466,6 @@ def prettify_log_name(raw_name: str) -> str:
     return name_map.get(raw_name, raw_name.replace("_", " ").title())
 
 def prettify_config_label(config_string: str) -> str:
-    """
-    Converts raw config string into a readable label.
-    - Removes parameters with value False
-    - Prints parameter name if True
-    - Prints param=value if non-boolean
-    """
-
     keywords = [
         'translucent_self_loops',
         'strict_end_activities',
@@ -638,40 +479,28 @@ def prettify_config_label(config_string: str) -> str:
     
     result = {}
     first_key, first_value = parts[0].rsplit('_', 1)
-    result[first_key] = first_value.lstrip('_')  # remove leading underscore before True/False
+    result[first_key] = first_value.lstrip('_')
 
     for i in range(1, len(parts), 2):
         key = parts[i]
-        value = parts[i + 1].lstrip('_')  # remove leading underscore before True/False
+        value = parts[i + 1].lstrip('_')
         result[key] = value
 
-    # Remove false entries, meaning heuristic was not applied
     result = {k: v for k, v in result.items() if v != 'False'}
     if not result:
-        return "No heuristics"
+        return "No Heuristics"
     
-    
-    
-
-    # optional shorter display names
     rename_map = {
-        #"translucent_self_loops": "self_loops",
-        #"strict_end_activities": "strict_end",
-        #"parallel_end_activities_heuristic": "parallel_end",
+        "translucent_self_loops": "self-loops",
+        "strict_end_activities": "strict-end",
+        "parallel_end_activities_heuristic": "parallel-end",
         "remove_arcs_heuristics": "remove_arcs",
         "add_arcs_heuristics": "add_arcs",
     }
-    # Change the naming of entries
     result = {rename_map.get(k, k): v for k, v in result.items()}
-    
-    result = {k: v for k, v in result.items() if (v != 'False' and v != "True")} #TODO This is just a quick hack
-    
-    result_string = " | ".join(result.values()).replace("_", " ")
+    result_string = " | ".join(result.keys()).replace("_", " ")
 
     return result_string
 
 if __name__ == "__main__":
-    visualize()
-    #summary_df = get_best_average_f1_per_threshold()
-    #print(summary_df)
-    #print("Done")
+    visualize(include_headings=False)
