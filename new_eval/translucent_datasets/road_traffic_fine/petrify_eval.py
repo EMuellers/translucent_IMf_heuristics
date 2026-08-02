@@ -7,6 +7,7 @@ import pandas as pd
 import os
 from pathlib import Path
 import pm4py
+from pm4py.util import constants
 from subprocess import CalledProcessError
 import time
 import sys
@@ -23,6 +24,9 @@ from translucent_discovery.translucent_inductive_miner.translucent_datatype impo
 
 from pandas.errors import SettingWithCopyWarning
 warnings.simplefilter(action='ignore', category=SettingWithCopyWarning)
+
+# Sets Gurobi as the LP solver for pm4py 
+constants.DEFAULT_LP_SOLVER = "gurobi"
 
 LOG_NAME = "road_traffic_fine"
 

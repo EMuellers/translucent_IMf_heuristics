@@ -5,6 +5,7 @@ import pandas as pd
 import os
 from pathlib import Path
 import pm4py
+from pm4py.util import constants
 import time
 import sys
 if os.name != 'nt': # Windows
@@ -18,6 +19,9 @@ from translucent_fitness.fitness import calculate_log_fitness
 from translucent_discovery.translucent_inductive_miner.translucent_base import discover_petri_net
 from pandas.errors import SettingWithCopyWarning
 warnings.simplefilter(action='ignore', category=SettingWithCopyWarning)
+
+# Sets Gurobi as the LP solver for pm4py 
+constants.DEFAULT_LP_SOLVER = "gurobi"
 
 LOG_NAME = "road_traffic_fine"
 
@@ -108,9 +112,7 @@ def evaluate_single_filter(f, log, noise_type, parameters=None):
     duration_tf = time.time() - start
     start = time.time()
     net_ts, im_ts, fm_ts = discover_petri_net(log, {"translucent_variant": "IMts", "tDFG_fall_through": False} | parameters, noise_threshold=f)
-    duration_ts = time.time() - start
-    
-    
+    duration_ts = time.time() - start 
     
     # Calculate scores
     #print("Starting calculation of fitness for noise type: " + noise_type + " and filter: " + str(f) + " and parameters: " + str(parameters))
@@ -167,6 +169,49 @@ def evaluate_single_filter(f, log, noise_type, parameters=None):
     print(f"Completed evaluation for noise type: {noise_type}, filter: {f}, parameters: {parameters}. Result: {result_data}")    
     return f, result_data
 
+# --- Worker Function for Parallel Filter Evaluation ---
+def evaluate_single_filter_test(f, log, noise_type, parameters=None):
+    """
+    Evaluates a single filter value 'f' for a given 'log' and 'noise_type'.
+    Returns a tuple: (f, result_dictionary)
+    """
+    result_data = {}
+    
+    #try:
+    start = time.time()
+    # Execute Inductive Miner f
+    #TODO: Find a way to record RAM usage!
+    max_memory = 0 # Placeholder for RAM usage
+    net_tf, im_tf, fm_tf = discover_petri_net(log, {"translucent_variant": "IMtf", "tDFG_fall_through": True} | parameters, noise_threshold=f)
+    duration_tf = time.time() - start
+    start = time.time()
+    net_ts, im_ts, fm_ts = discover_petri_net(log, {"translucent_variant": "IMts", "tDFG_fall_through": False} | parameters, noise_threshold=f)
+    duration_ts = time.time() - start 
+    
+    print("Starting calculation of translucent fitness and precision for IMtf for noise type: " + noise_type + " and filter: " + str(f))
+    translucent_fitness_tf = calculate_log_fitness(log, net_tf, im_tf, fm_tf)
+    print("Starting calculation of translucent fitness and precision for IMts for noise type: " + noise_type + " and filter: " + str(f) + " and parameters: " + str(parameters))
+    translucent_fitness_ts = calculate_log_fitness(log, net_ts, im_ts, fm_ts)
+    
+    
+    
+    simplicity_tf = len(net_tf.places) + len(net_tf.transitions) + len(net_tf.arcs)
+    simplicity_ts = len(net_ts.places) + len(net_ts.transitions) + len(net_ts.arcs)
+    
+    result_data = {
+        "time_tf": duration_tf,
+        "time_ts": duration_ts,
+        "RAM": max_memory / 1024, # Convert to MB
+        "translucent_fitness_tf": translucent_fitness_tf,
+        "translucent_fitness_ts": translucent_fitness_ts,
+        "simplicity_tf": simplicity_tf,
+        "simplicity_ts": simplicity_ts,
+        "failed": False
+        }
+   
+    print(f"Completed evaluation for noise type: {noise_type}, filter: {f}, parameters: {parameters}. Result: {result_data}")    
+    return f, result_data
+
 def prettify_config_for_file_name(config):
     # Convert a config dictionary to a string that is suitable for use in file names
     return "_".join([f"{k}_{v}" for k, v in config.items()])
@@ -191,22 +236,25 @@ def evaluate_noise_type(noise_type, log_path):
     filter_values = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     
     
-    filter_values = [0.4] #TODO!
+    filter_values = [0.0,0.1, 0.2, 0.3, 0.4] #TODO!
     
     parameter_configs = generate_minor_heuristics_parameter_configs() # TODO: Change this for full eval!
     
-    parameter_configs = parameter_configs[:2] # For testing only
+    parameter_configs = parameter_configs[:2] # For testing only #TODO!
     
     for config in parameter_configs:
     
         # --- Parallel Execution over Filter Values ---
         print(f"Starting evaluation for noise type: {noise_label} and parameters: {config}")
         
+        #evaluate_single_filter(f=0.0, log=log, noise_type=noise_label, parameters=config)#TODO!
+        
         # Partial function binds the log and noise_type, leaving 'f' as the variable
-        worker_func = partial(evaluate_single_filter, log=log, noise_type=noise_label, parameters=config)
+        worker_func = partial(evaluate_single_filter_test, log=log, noise_type=noise_label, parameters=config)
         
         # Use all available CPUs for the filter values
         num_processes = min(mp.cpu_count(), len(filter_values))
+        num_processes = 2 #TODO!
         
         with mp.Pool(processes=num_processes) as pool:
             # Returns a list of (f, result_dict) tuples

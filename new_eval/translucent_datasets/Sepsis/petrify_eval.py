@@ -120,6 +120,8 @@ if __name__ == "__main__":
     
     noise_types = [False, "add_enabled", "remove_enabled", "add_events", "change_events"]
     
+    noise_types = ["change_events"] # For testing only
+    
     path_to_log = Path(f"new_eval/translucent_datasets/{LOG_NAME}")
     
     if os.name == 'nt': # Windows

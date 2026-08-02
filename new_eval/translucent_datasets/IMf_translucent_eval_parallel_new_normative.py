@@ -168,7 +168,7 @@ def _run_returning_pair_in_process(target, args) -> tuple | None:
 
 def _pnml_path(log_name: str, noise_label: str, config: dict, variant: str, f: float) -> Path:
     folder = Path(
-        f"new_eval/translucent_datasets/{log_name}/pnml/translucent_delta/{noise_label}/"
+        f"new_eval/translucent_datasets/{log_name}/pnml/translucent/{noise_label}/" # PATH CHANGE FOR DELTA
         f"{prettify_config_for_file_name(config)}"
     )
     folder.mkdir(parents=True, exist_ok=True)

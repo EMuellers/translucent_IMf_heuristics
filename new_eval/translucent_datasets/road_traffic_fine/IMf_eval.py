@@ -6,6 +6,7 @@ import pandas as pd
 import os
 from pathlib import Path
 import pm4py
+from pm4py.util import constants
 import subprocess
 import time
 import sys
@@ -17,6 +18,9 @@ from translucent_precision.main import translucent_precision_score_eval_version 
 from translucent_fitness.fitness import calculate_log_fitness
 from pandas.errors import SettingWithCopyWarning
 warnings.simplefilter(action='ignore', category=SettingWithCopyWarning)
+
+# Sets Gurobi as the LP solver for pm4py 
+constants.DEFAULT_LP_SOLVER = "gurobi"
 
 LOG_NAME = "road_traffic_fine"
 

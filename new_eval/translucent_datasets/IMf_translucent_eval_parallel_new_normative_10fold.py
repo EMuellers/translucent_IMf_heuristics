@@ -63,9 +63,9 @@ def _write_error_file(context: str, exc: BaseException) -> None:
 
 def generate_parameter_configs():
     parameter_list = []
-    translucent_self_loops            = [False]
+    translucent_self_loops            = [True]
     strict_end_activities             = [True]
-    parallel_end_activities_heuristic = [False]
+    parallel_end_activities_heuristic = [True]
     remove_arcs_heuristic = ["dependency_score", "support", "confidence", "exclusive_choice_frequency"]
     add_arcs_heuristic    = ["dependency_score", "support", "confidence", "parallel_relationship_frequency"]
     for self_loops in translucent_self_loops:
