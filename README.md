@@ -1,5 +1,6 @@
 # Heuristically Altering translucent Directly Follows Graphs
-Here we provide the code for our thesis "". This work extends the translucent Inductive Miner-infrequent by Beyel et al.:
+Here we provide the code for our thesis "Manipulating Translucent Directly-Follows
+Graphs for Cut Detection". This work extends the translucent Inductive Miner-infrequent by Beyel et al.:
 
 > **Harry H. Beyel, Wil M. P. van der Aalst**. (2025). *Using translucent activity relationships frequencies to enhance process discovery*.  Process Science 2, 15. [DOI](https://doi.org/10.1007/s44311-025-00010-y) | [Article Link](https://link.springer.com/article/10.1007/s44311-025-00010-y)
 
