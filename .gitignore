@@ -164,6 +164,7 @@ cython_debug/
 logs/
 
 *.csv
+!new_eval/final_results_thesis/*.csv
 *.png
 *.pnml
 *.pdf
