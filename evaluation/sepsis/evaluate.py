@@ -85,10 +85,10 @@ def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False, incl
         i += 1
         df = pd.read_csv(file)
         sub_log = log_converter.apply(df, variant=log_converter.Variants.TO_EVENT_LOG)
-        
+        """
         if not tDFG: # signifies which dfg to use for fall throughs
-            model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IM", "tDFG_fall_through": False}, threshold)
-            #model, i_m, f_m = pm4py.discovery.discover_petri_net_inductive(sub_log, noise_threshold=threshold)
+            #model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IM", "tDFG_fall_through": False}, threshold)
+            model, i_m, f_m = pm4py.discovery.discover_petri_net_inductive(sub_log, noise_threshold=threshold)
             if print_models:
                 os.makedirs('results/DFG_fall/'+base+"/"+threshold_str+"/models/IM", exist_ok=True)
                 pm4py.write_pnml(model, i_m, f_m, f"results/DFG_fall/{base}/{threshold_str}/models/IM/im_{i}.pnml")
@@ -100,7 +100,7 @@ def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False, incl
                 pm4py.write_pnml(model, i_m, f_m, f"results/tDFG_fall/{base}/{threshold_str}/models/IM/im_{i}.pnml")
         im_fitness.append(pm4py.conformance.fitness_alignments(log, model, i_m, f_m)["log_fitness"])
         im_precision.append(translucent_precision_score(log, model, i_m, f_m))
-        
+        """
         if not tDFG:
             model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMto", "tDFG_fall_through": False} | algo_parameters, threshold)
             if print_models:
@@ -113,7 +113,7 @@ def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False, incl
                 pm4py.write_pnml(model, i_m, f_m, f"results/tDFG_fall/{base}/{threshold_str}/models/IMto/imto_{i}.pnml")
         imto_fitness.append(pm4py.conformance.fitness_alignments(log, model, i_m, f_m)["log_fitness"])
         imto_precision.append(translucent_precision_score(log, model, i_m, f_m))
-
+    """
         if not tDFG:
             model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMtf", "tDFG_fall_through": False} | algo_parameters, threshold)
             if print_models:
@@ -139,7 +139,7 @@ def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False, incl
                 pm4py.write_pnml(model, i_m, f_m, f"results/tDFG_fall/{base}/{threshold_str}/models/IMts/imts_{i}.pnml")
         imts_fitness.append(pm4py.conformance.fitness_alignments(log, model, i_m, f_m)["log_fitness"])
         imts_precision.append(translucent_precision_score(log, model, i_m, f_m))
-
+    """
     im_f1 = compute_f_1_scores(im_fitness, im_precision)
     imto_f1 = compute_f_1_scores(imto_fitness, imto_precision)
     imtf_f1 = compute_f_1_scores(imtf_fitness, imtf_precision)
@@ -283,11 +283,9 @@ logs = [0.4]
 model = [0.4]
 
 tDFGs = [False]
-#Why do IM and pm4py IM differ in fitness and precision values? -> still probably fallthroughs...
 #TODO: Finish heuristics miner inspired heuristic and add to infrequent
-#TODO: Add end activity heuristic (see notes IPad)
 
-#TODO: Mutual exclusive tdf relationships, what is synch in the paper? How is filtering applied?
+
 # Here the different Heuristics for the DFG can be set
 # If no value is set, the parameter will be treated as set to False in the algorithm
 #TODO: Add parameters to file path?
@@ -298,15 +296,16 @@ algo_parameters = {
     
     ### PARAMETERS FOR FREQUENT ALGORITHM ###
     
-    "delta_heuristic_frequent_before": False, # Signifies if to apply the remove arcs heuristic in the frequent case on the unfiltered tDFG
+    "delta_heuristic_frequent_before": True, # Signifies if to apply the remove arcs heuristic in the frequent case on the unfiltered tDFG
     
-    "delta_heuristic_frequent_after": True, # Signifies if to apply the remove arcs heuristic in the frequent case on the filtered tDFG
+    "delta_heuristic_frequent_after": False, # Signifies if to apply the remove arcs heuristic in the frequent case on the filtered tDFG
     
     ### PARAMETERS THAT APPLY TO BOTH ###
     
     "strict_end_activities": False, # Only consider translucent end activities which actually appear at the end of a trace at least once
     
-    "remove_arcs_heuristics": "dependency_score", # Remove arcs exclusive to tDFG before applying fall throughs ("dependency_score"), set to False to disable
+    "remove_arcs_heuristics": 'exclusive_choice_frequency', #"dependency_score", # Remove arcs exclusive to tDFG before applying fall throughs ("dependency_score"), set to False to disable
+                                    # "exclusive_choice_frequency" to use the choice frequency for filtering
     
     "parallel_end_activities_heuristic": False # If two activities are in translucent parallel relation and one is an end activity, the other is also considered an end activity in the (frequent) tDFG
 

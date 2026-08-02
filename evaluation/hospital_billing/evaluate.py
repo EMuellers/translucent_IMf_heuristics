@@ -84,6 +84,7 @@ def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False, incl
         i += 1
         df = pd.read_csv(file)
         sub_log = log_converter.apply(df, variant=log_converter.Variants.TO_EVENT_LOG)
+        """
         # IM (standard)
         if not tDFG:
             model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IM", "tDFG_fall_through": False} | algo_parameters, threshold)
@@ -97,7 +98,7 @@ def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False, incl
                 pm4py.write_pnml(model, i_m, f_m, f"results/tDFG_fall/{base}/{threshold_str}/models/IM/im_{i}.pnml")
         im_fitness.append(pm4py.conformance.fitness_alignments(log, model, i_m, f_m)["log_fitness"])
         im_precision.append(translucent_precision_score(log, model, i_m, f_m))
-
+        """
         # IMto
         if not tDFG:
             model, i_m, f_m = discover_petri_net(sub_log, {"translucent_variant": "IMto", "tDFG_fall_through": False} | algo_parameters, threshold)
@@ -265,10 +266,10 @@ def evaluate(base, tDFG, threshold, algo_parameters={}, print_models=False, incl
         plt.savefig('results/tDFG_fall/'+base+"/"+threshold_str+"/result_10.pdf", bbox_inches="tight")
 
 
-logs = [0.8, 0.6, 0.4, 0.3, 0.2]
-model = [0.8, 0.6, 0.4, 0.3, 0.2, 0]
+logs = [0.4]
+model = [0]
 
-tDFGs = [True, False]
+tDFGs = [False]
 
 
 
@@ -276,16 +277,23 @@ tDFGs = [True, False]
 # If no value is set, the parameter will be treated as set to False in the algorithm
 # TODO: Add parameters to file path?
 algo_parameters = {
+    
     ### PARAMETERS FOR NON-FREQUENT ALGORITHM ###
-
-
+    
+    
     ### PARAMETERS FOR FREQUENT ALGORITHM ###
-
-
+    
+    "delta_heuristic_frequent_before": False, # Signifies if to apply the remove arcs heuristic in the frequent case on the unfiltered tDFG
+    
+    "delta_heuristic_frequent_after": False, # Signifies if to apply the remove arcs heuristic in the frequent case on the filtered tDFG
+    
     ### PARAMETERS THAT APPLY TO BOTH ###
+    
     "strict_end_activities": False, # Only consider translucent end activities which actually appear at the end of a trace at least once
-
-    "remove_arcs_heuristics": False # Remove arcs exclusive to tDFG before applying fall throughs
+    
+    "remove_arcs_heuristics": "dependency_score", #"dependency_score", # Remove arcs exclusive to tDFG before applying fall throughs ("dependency_score"), set to False to disable
+    
+    "parallel_end_activities_heuristic": False # If two activities are in translucent parallel relation and one is an end activity, the other is also considered an end activity in the (frequent) tDFG
 
 }
 
