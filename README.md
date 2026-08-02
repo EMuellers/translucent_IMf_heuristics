@@ -46,4 +46,4 @@ It creates a transition system based on a translucent event log, writes it to a 
 
 ## Translucent Dataset
 The datasets we generated for our evaluation are provided on zenodo: *LINK*
-The code we used to generate the dataset is provided in ....
+The code we used to generate the dataset is provided in "new_eval/translucent_datasets/DATASETNAME/generate_normative_log_DATASETNAME.py
